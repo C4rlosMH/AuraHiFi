@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
-import TrackPlayer, { useProgress, RepeatMode } from 'react-native-track-player';
+import TrackPlayer, { RepeatMode } from 'react-native-track-player';
 import { MaterialIcons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
 
 import { playerService } from '../../services/PlayerService';
 import { navidromeApi } from '../../services/navidromeApi';

@@ -6,7 +6,7 @@ import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-tr
 import { navidromeApi, Track } from './src/services/navidromeApi';
 import { downloadManager } from './src/services/downloadManager';
 import { setupTrackPlayer } from './src/services/trackPlayerSetup';
-import { PlaybackService } from './src/services/playbackService';
+//import { PlaybackService } from './src/services/playbackService';
 import { playerService } from './src/services/PlayerService';
 
 // Importación de nuestras pantallas y estilos
@@ -14,7 +14,7 @@ import PlayerScreen from './src/screens/Player/PlayerScreen';
 import { styles } from './App.styles'; // <-- ESTA ES LA LÍNEA QUE FALTA
 
 // 1. REGISTRO DEL SERVICIO HEADLESS (Fondo)
-TrackPlayer.registerPlaybackService(() => PlaybackService);
+//TrackPlayer.registerPlaybackService(() => PlaybackService);
 
 export default function App() {
     const [tracks, setTracks] = useState<Track[]>([]);

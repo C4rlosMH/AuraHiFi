@@ -14,7 +14,6 @@ export const styles = StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: 'rgba(255, 255, 255, 0.02)', 
     },
-    // --- CABECERAS ---
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -73,7 +72,6 @@ export const styles = StyleSheet.create({
         fontSize: 14,
         marginTop: 2,
     },
-    // --- ZONA CENTRAL (PORTADA / LISTA) ---
     albumContainer: {
         width: '100%',
         aspectRatio: 1,
@@ -113,14 +111,13 @@ export const styles = StyleSheet.create({
         flex: 1,
         marginTop: 15,
     },
-    // --- CONTROLES INFERIORES ANCLADOS ---
     glassPanel: {
         borderRadius: 35,
         padding: 25,
         backgroundColor: colors.glassDark,
         borderWidth: 1,
         borderColor: colors.border,
-        marginTop: 15, // Reducido para dar mas espacio a la cola superior
+        marginTop: 15,
         marginBottom: 20,
     },
     metaRow: {
@@ -139,42 +136,6 @@ export const styles = StyleSheet.create({
         color: colors.textMuted,
         fontSize: 16,
         fontWeight: '500',
-    },
-    progressContainer: {
-        width: '100%',
-        marginBottom: 25,
-    },
-    progressBarBg: {
-        width: '100%',
-        height: 6,
-        backgroundColor: colors.progressBg,
-        borderRadius: 3,
-        position: 'relative',
-    },
-    progressBarFill: {
-        height: '100%',
-        backgroundColor: colors.primary,
-        borderRadius: 3,
-    },
-    sliderThumb: {
-        position: 'absolute',
-        top: -5,
-        width: 16,
-        height: 16,
-        borderRadius: 8,
-        backgroundColor: colors.primary,
-        marginLeft: -8,
-        elevation: 5,
-    },
-    timeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 10,
-    },
-    timeText: {
-        color: 'rgba(255, 255, 255, 0.5)',
-        fontSize: 12,
-        fontWeight: '600',
     },
     controlsRow: {
         flexDirection: 'row',
