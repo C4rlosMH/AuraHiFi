@@ -1,15 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from 'react-native';
-import TrackPlayer, { State } from 'react-native-track-player';
+import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
 
+// Importación de nuestros servicios
 import { navidromeApi, Track } from './src/services/navidromeApi';
 import { downloadManager } from './src/services/downloadManager';
 import { setupTrackPlayer } from './src/services/trackPlayerSetup';
 import { PlaybackService } from './src/services/playbackService';
-import { styles } from './App.styles';
+import { playerService } from './src/services/PlayerService';
 
-// 1. REGISTRO DEL SERVICIO HEADLESS
-// Esto debe ejecutarse fuera del componente de React para sobrevivir cuando la app se minimiza
+// Importación de nuestras pantallas y estilos
+import PlayerScreen from './src/screens/Player/PlayerScreen';
+import { styles } from './App.styles'; // <-- ESTA ES LA LÍNEA QUE FALTA
+
+// 1. REGISTRO DEL SERVICIO HEADLESS (Fondo)
 TrackPlayer.registerPlaybackService(() => PlaybackService);
 
 export default function App() {
@@ -17,10 +21,13 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     
-    // Estados del reproductor
+    // Estados de UI sincronizados
     const [currentTrackTitle, setCurrentTrackTitle] = useState<string | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPlayerReady, setIsPlayerReady] = useState(false);
+    
+    // Estado para controlar si el reproductor gigante está abierto o cerrado
+    const [isFullPlayerVisible, setIsFullPlayerVisible] = useState(false);
 
     const fetchMusic = async () => {
         const data = await navidromeApi.getAllTracks();
@@ -43,7 +50,6 @@ export default function App() {
 
     useEffect(() => {
         async function initialize() {
-            // Inicializamos el nuevo motor nativo de audio
             const setupSuccess = await setupTrackPlayer();
             setIsPlayerReady(setupSuccess);
 
@@ -61,55 +67,16 @@ export default function App() {
         setIsRefreshing(false);
     }, []);
 
-    const playTrack = async (item: Track) => {
-        if (!isPlayerReady) return;
-
-        try {
-            setCurrentTrackTitle(item.title);
-            setIsPlaying(true);
-
-            // Obtenemos la ruta del sandbox local
-            const uriToPlay = await downloadManager.downloadTrack(
-                item.streamUrl,
-                item.title,
-                item.artist
-            );
-
-            // 2. INYECCIÓN DE METADATOS AL SISTEMA NATIVO
-            await TrackPlayer.reset();
-            await TrackPlayer.add({
-                id: item.id,
-                url: uriToPlay, 
-                title: item.title,
-                artist: item.artist,
-                artwork: item.coverArtUrl
-            });
-
-            await TrackPlayer.play();
-        } catch (error) {
-            console.error("Error al gestionar el track:", error);
-            setIsPlaying(false);
+    // 2. HOOK DE ESCUCHA (Sincronización Reactiva UI-Motor)
+    useTrackPlayerEvents([Event.PlaybackTrackChanged, Event.PlaybackState], async (event) => {
+        if (event.type === Event.PlaybackTrackChanged && event.nextTrack != null) {
+            const track = await TrackPlayer.getTrack(event.nextTrack);
+            setCurrentTrackTitle(track?.title || 'Desconocido');
         }
-    };
-
-    const togglePlayback = async () => {
-        if (!isPlayerReady) return;
-
-        try {
-            // Obtenemos el estado actual directamente del motor nativo
-            const playbackState = await TrackPlayer.getPlaybackState();
-            
-            if (playbackState.state === State.Playing) {
-                await TrackPlayer.pause();
-                setIsPlaying(false);
-            } else {
-                await TrackPlayer.play();
-                setIsPlaying(true);
-            }
-        } catch (error) {
-            console.error("Error al pausar/reproducir:", error);
+        if (event.type === Event.PlaybackState) {
+            setIsPlaying(event.state === State.Playing);
         }
-    };
+    });
 
     const handleToggleFavorite = async (id: string) => {
         try {
@@ -147,7 +114,13 @@ export default function App() {
                     />
                 }
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.trackCard} onPress={() => playTrack(item)}>
+                    // 3. ENVIAMOS LA LÓGICA AL SERVICIO EXTERNO
+                    <TouchableOpacity 
+                        style={styles.trackCard} 
+                        onPress={() => {
+                            if (isPlayerReady) playerService.playCollection(item, tracks);
+                        }}
+                    >
                         <Image source={{ uri: item.coverArtUrl }} style={styles.coverImage} />
                         <View style={styles.trackInfo}>
                             <Text style={styles.trackTitle} numberOfLines={1}>{item.title}</Text>
@@ -164,19 +137,41 @@ export default function App() {
                 )}
             />
 
+            {/* 4. MINI PLAYER (Abre la pantalla gigante) */}
             {currentTrackTitle && (
-                <View style={styles.miniPlayer}>
+                <TouchableOpacity 
+                    style={styles.miniPlayer} 
+                    onPress={() => setIsFullPlayerVisible(true)} // Activa el modal gigante
+                >
                     <View style={styles.miniPlayerInfo}>
                         <Text style={styles.miniPlayerTitle} numberOfLines={1}>{currentTrackTitle}</Text>
                         <Text style={styles.miniPlayerStatus}>
-                            {isPlaying ? 'REPRODUCIENDO (Motor Nativo)' : 'PAUSADO'}
+                            {isPlaying ? 'REPRODUCIENDO' : 'PAUSADO'}
                         </Text>
                     </View>
-                    <TouchableOpacity style={styles.playButton} onPress={togglePlayback}>
-                        <Text style={styles.playButtonText}>{isPlaying ? 'PAUSA' : 'PLAY'}</Text>
-                    </TouchableOpacity>
-                </View>
+                    
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
+                        <TouchableOpacity onPress={() => playerService.previous()} style={{ padding: 10 }}>
+                            <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>⏮</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity style={styles.playButton} onPress={() => playerService.togglePlayback()}>
+                            <Text style={styles.playButtonText}>{isPlaying ? 'PAUSA' : 'PLAY'}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => playerService.next()} style={{ padding: 10 }}>
+                            <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>⏭</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
             )}
+
+            {/* 5. PANTALLA GIGANTE DEL REPRODUCTOR (Modal) */}
+            <PlayerScreen 
+                isVisible={isFullPlayerVisible} 
+                onClose={() => setIsFullPlayerVisible(false)} 
+                isPlaying={isPlaying}
+            />
         </View>
     );
 }
