@@ -12,8 +12,9 @@ export const styles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 40,
         justifyContent: 'space-between',
-        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        backgroundColor: 'rgba(255, 255, 255, 0.02)', 
     },
+    // --- CABECERAS ---
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -29,11 +30,54 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
     },
+    queueHeaderPanel: {
+        borderRadius: 20,
+        padding: 15,
+        backgroundColor: colors.glassDark,
+        borderWidth: 1,
+        borderColor: colors.border,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    queueHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: 15,
+    },
+    headerThumbnailContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        overflow: 'hidden',
+        backgroundColor: '#111111',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    headerThumbnail: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    queueHeaderMetadata: {
+        flex: 1,
+    },
+    queueHeaderTitle: {
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    queueHeaderArtist: {
+        color: colors.textMuted,
+        fontSize: 14,
+        marginTop: 2,
+    },
+    // --- ZONA CENTRAL (PORTADA / LISTA) ---
     albumContainer: {
         width: '100%',
         aspectRatio: 1,
         borderRadius: 30,
-        marginTop: 20,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -54,7 +98,7 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: colors.glassBadge,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.2)',
         gap: 6,
@@ -65,13 +109,18 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
         letterSpacing: 1,
     },
+    queueListContainer: {
+        flex: 1,
+        marginTop: 15,
+    },
+    // --- CONTROLES INFERIORES ANCLADOS ---
     glassPanel: {
         borderRadius: 35,
         padding: 25,
         backgroundColor: colors.glassDark,
         borderWidth: 1,
         borderColor: colors.border,
-        marginTop: 30,
+        marginTop: 15, // Reducido para dar mas espacio a la cola superior
         marginBottom: 20,
     },
     metaRow: {
@@ -148,5 +197,5 @@ export const styles = StyleSheet.create({
     },
     footerAction: {
         padding: 15,
-    }
+    },
 });

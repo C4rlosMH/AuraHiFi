@@ -3,14 +3,9 @@ import { colors } from '../../styles/theme';
 
 export const styles = StyleSheet.create({
     queueContainer: {
-        width: '100%',
-        aspectRatio: 1,
-        marginTop: 20,
-        borderRadius: 30,
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
-        borderWidth: 1,
-        borderColor: colors.border,
-        padding: 20,
+        flex: 1, 
+        marginTop: 5,
+        paddingHorizontal: 5, 
     },
     queueHeader: {
         color: colors.primary,
@@ -18,9 +13,9 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
         letterSpacing: 2,
         marginBottom: 15,
-        borderBottomWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
-        paddingBottom: 8,
+        borderBottomWidth: StyleSheet.hairlineWidth, 
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        paddingBottom: 10,
     },
     queueList: {
         flex: 1,
@@ -28,29 +23,24 @@ export const styles = StyleSheet.create({
     queueItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 12, 
         borderBottomWidth: 0.5,
         borderColor: 'rgba(255, 255, 255, 0.03)',
-        gap: 12,
+        paddingHorizontal: 10, // Añadimos padding para que el texto no toque el borde
+        gap: 15, 
     },
     queueItemActive: {
-        backgroundColor: 'rgba(0, 255, 204, 0.05)',
-        borderRadius: 8,
-        paddingHorizontal: 8,
+        backgroundColor: 'rgba(0, 255, 204, 0.08)', 
+        borderRadius: 12,
     },
-    queueIndex: {
-        color: colors.textMuted,
-        fontSize: 12,
-        width: 20,
-        textAlign: 'center',
-        fontFamily: 'monospace',
-    },
+    // Eliminada la clase queueIndex
     queueTextContainer: {
         flex: 1,
+        justifyContent: 'center',
     },
     queueTitle: {
         color: colors.primary,
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: '600',
     },
     queueTitleActive: {
@@ -59,7 +49,7 @@ export const styles = StyleSheet.create({
     },
     queueArtist: {
         color: colors.textMuted,
-        fontSize: 12,
-        marginTop: 2,
+        fontSize: 13,
+        marginTop: 3,
     },
 });

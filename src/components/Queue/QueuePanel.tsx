@@ -3,30 +3,31 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './QueuePanel.styles';
 
+// Interfaz limpia: Ya no exige el activeIndex
 interface QueuePanelProps {
     queue: any[];
-    activeIndex: number | null;
     isPlaying: boolean;
     onSelectTrack: (index: number) => void;
 }
 
-export default function QueuePanel({ queue, activeIndex, isPlaying, onSelectTrack }: QueuePanelProps) {
+export default function QueuePanel({ queue, isPlaying, onSelectTrack }: QueuePanelProps) {
     return (
         <View style={styles.queueContainer}>
-            <Text style={styles.queueHeader}>SIGUIENTES</Text>
+            <Text style={styles.queueHeader}>A CONTINUACIÓN</Text>
             <FlatList
                 data={queue}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
+                keyExtractor={(item) => `${item.id}-${item.nativeIndex}`}
                 style={styles.queueList}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item, index }) => {
-                    const isCurrent = index === activeIndex;
+                    // La canción actual siempre es la posición 0
+                    const isCurrent = index === 0; 
+                    
                     return (
                         <TouchableOpacity 
                             style={[styles.queueItem, isCurrent && styles.queueItemActive]}
-                            onPress={() => onSelectTrack(index)}
+                            onPress={() => onSelectTrack(item.nativeIndex)}
                         >
-                            <Text style={styles.queueIndex}>{index + 1}</Text>
                             <View style={styles.queueTextContainer}>
                                 <Text 
                                     style={[styles.queueTitle, isCurrent && styles.queueTitleActive]}
@@ -38,8 +39,13 @@ export default function QueuePanel({ queue, activeIndex, isPlaying, onSelectTrac
                                     {item.artist}
                                 </Text>
                             </View>
-                            {isCurrent && isPlaying && (
-                                <MaterialIcons name="volume-up" size={18} color="#00ffcc" />
+                            
+                            {isCurrent && (
+                                <MaterialIcons 
+                                    name={isPlaying ? "volume-up" : "volume-mute"} 
+                                    size={20} 
+                                    color="#00ffcc" 
+                                />
                             )}
                         </TouchableOpacity>
                     );

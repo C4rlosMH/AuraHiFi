@@ -53,14 +53,25 @@ class PlayerService {
     public async previous() { try { await TrackPlayer.skipToPrevious(); } catch (e) {} }
 
     public async toggleRepeat(): Promise<RepeatMode> {
+        // El ciclo estándar de UX es: Apagado -> Repetir Todo -> Repetir Una -> Apagado
         if (this.currentRepeatMode === RepeatMode.Off) {
-            this.currentRepeatMode = RepeatMode.Track;
-        } else if (this.currentRepeatMode === RepeatMode.Track) {
-            this.currentRepeatMode = RepeatMode.Queue;
+            this.currentRepeatMode = RepeatMode.Queue; // Modo 1: Repetir lista completa
+            console.log("[REPEAT] 🔁 Modo cambiado a: REPETIR COLA (Queue)");
+        } else if (this.currentRepeatMode === RepeatMode.Queue) {
+            this.currentRepeatMode = RepeatMode.Track; // Modo 2: Bucle infinito de esta canción
+            console.log("[REPEAT] 🔂 Modo cambiado a: REPETIR CANCIÓN (Track)");
         } else {
-            this.currentRepeatMode = RepeatMode.Off;
+            this.currentRepeatMode = RepeatMode.Off; // Modo 3: Apagado
+            console.log("[REPEAT] ➡️ Modo cambiado a: APAGADO (Off)");
         }
-        await TrackPlayer.setRepeatMode(this.currentRepeatMode);
+
+        try {
+            // Enviamos la orden directa al hilo nativo (C++/Java/Swift)
+            await TrackPlayer.setRepeatMode(this.currentRepeatMode);
+        } catch (error) {
+            console.error("[REPEAT] Error al cambiar el modo en el motor:", error);
+        }
+
         return this.currentRepeatMode;
     }
 
