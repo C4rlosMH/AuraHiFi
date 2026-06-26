@@ -9,10 +9,10 @@ export const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingHorizontal: 25,
-        paddingTop: 60,
-        paddingBottom: 40,
+        paddingTop: 60, // Si usas barra de estado transparente, está bien.
+        paddingBottom: 20, // <-- REDUCE ESTE PADDING PARA DARLE ESPACIO A LOS BOTONES
         justifyContent: 'space-between',
-        backgroundColor: 'rgba(255, 255, 255, 0.02)', 
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
     },
     headerRow: {
         flexDirection: 'row',
@@ -74,13 +74,17 @@ export const styles = StyleSheet.create({
     },
     albumContainer: {
         width: '100%',
+        maxWidth: 340, // <-- Límite máximo para que no crezca a lo loco
+        flexShrink: 1, // <--- CRUCIAL: Le dice a la imagen que se haga pequeña si no hay espacio abajo
         aspectRatio: 1,
+        alignSelf: 'center', // Para que quede centrada
         borderRadius: 30,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
         backgroundColor: '#111111',
         elevation: 15,
+        marginTop: 10,
     },
     albumImage: {
         width: '100%',
@@ -113,12 +117,12 @@ export const styles = StyleSheet.create({
     },
     glassPanel: {
         borderRadius: 35,
-        padding: 25,
+        padding: 20, // <-- REDUCE DE 25 a 20 PARA GANAR ESPACIO
         backgroundColor: colors.glassDark,
         borderWidth: 1,
         borderColor: colors.border,
         marginTop: 15,
-        marginBottom: 20,
+        marginBottom: 15, // <-- REDUCE PARA QUE LOS BOTONES DE ABAJO NO SE SALGAN
     },
     metaRow: {
         flexDirection: 'row',
@@ -128,13 +132,13 @@ export const styles = StyleSheet.create({
     },
     titleText: {
         color: colors.primary,
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 4,
     },
     artistText: {
         color: colors.textMuted,
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '500',
     },
     controlsRow: {

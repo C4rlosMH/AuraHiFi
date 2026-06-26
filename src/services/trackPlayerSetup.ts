@@ -14,6 +14,7 @@ export const setupTrackPlayer = async () => {
                 Capability.SkipToNext,
                 Capability.SkipToPrevious,
                 Capability.Stop,
+                Capability.SeekTo,
             ],
             compactCapabilities: [
                 Capability.Play,
@@ -26,6 +27,7 @@ export const setupTrackPlayer = async () => {
                 Capability.Pause,
                 Capability.SkipToNext,
                 Capability.SkipToPrevious,
+                Capability.SeekTo,
             ],
         });
         isSetup = true;

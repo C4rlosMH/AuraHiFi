@@ -21,4 +21,9 @@ export const PlaybackService = async function() {
             console.log("Error al retroceder cancion:", error);
         }
     });
+
+    TrackPlayer.addEventListener(Event.RemoteSeek, (event) => {
+        console.log("Log: Arrastre desde la notificación a", event.position);
+        TrackPlayer.seekTo(event.position);
+    });
 };
