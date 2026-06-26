@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '../../styles/theme';
+import { colors } from '../../../styles/theme';
 
 export const styles = StyleSheet.create({
     queueContainer: {

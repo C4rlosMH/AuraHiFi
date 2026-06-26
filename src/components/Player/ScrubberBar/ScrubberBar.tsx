@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 import { styles } from './ScrubberBar.styles';
-import { useTapToSeek } from '../../hooks/useTapToSeek';
+import { useTapToSeek } from '../../../hooks/useTapToSeek';
 
 export default function ScrubberBar() {
     const { position, duration } = useProgress(250);

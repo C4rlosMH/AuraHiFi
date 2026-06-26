@@ -1,0 +1,33 @@
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { styles } from './TrackMetadata.styles';
+
+interface TrackMetadataProps {
+    title: string;
+    artist: string;
+    isFavorite: boolean;
+    onToggleFavorite: () => void;
+}
+
+export default function TrackMetadata({ title, artist, isFavorite, onToggleFavorite }: TrackMetadataProps) {
+    return (
+        <View style={styles.metaRow}>
+            <View style={styles.textMetadataColumn}>
+                <Text style={styles.titleText} numberOfLines={1}>
+                    {title}
+                </Text>
+                <Text style={styles.artistText} numberOfLines={1}>
+                    {artist}
+                </Text>
+            </View>
+            <TouchableOpacity onPress={onToggleFavorite}>
+                <MaterialIcons 
+                    name={isFavorite ? "favorite" : "favorite-border"} 
+                    size={28} 
+                    color={isFavorite ? "#00ffcc" : "#ffffff"} 
+                />
+            </TouchableOpacity>
+        </View>
+    );
+}
