@@ -1,8 +1,10 @@
+// src/components/ScrubberBar/ScrubberBar.tsx
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import Slider from '@react-native-community/slider';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 import { styles } from './ScrubberBar.styles';
+import { useTapToSeek } from '../../hooks/useTapToSeek';
 
 export default function ScrubberBar() {
     const { position, duration } = useProgress(250);
@@ -10,8 +12,17 @@ export default function ScrubberBar() {
     const [isDragging, setIsDragging] = useState(false);
 
     const safeDuration = duration > 0 ? duration : 1;
-    // Si estás arrastrando, mostramos tu dedo. Si no, mostramos la música.
     const displayValue = isDragging ? dragValue : position;
+
+    const handleOptimisticJump = (predictedTime: number) => {
+        setIsDragging(true);
+        setDragValue(predictedTime); 
+        setTimeout(() => setIsDragging(false), 500); 
+    };
+
+    const { handleLayout, handleTouchEnd } = useTapToSeek(
+        position, safeDuration, isDragging, handleOptimisticJump
+    );
 
     const formatTime = (secs: number) => {
         if (!secs || isNaN(secs) || secs < 0) return '0:00';
@@ -21,23 +32,34 @@ export default function ScrubberBar() {
     };
 
     return (
-        <View style={styles.progressContainer}>
+        <View 
+            style={styles.progressContainer}
+            onLayout={handleLayout}
+            onTouchEnd={handleTouchEnd}
+        >
             <Slider
                 style={{ width: '100%', height: 40 }}
                 minimumValue={0}
                 maximumValue={safeDuration}
-                value={displayValue}
+                value={displayValue}  
                 minimumTrackTintColor="#00ffcc"
                 maximumTrackTintColor="rgba(255, 255, 255, 0.2)"
                 thumbTintColor="#ffffff"
+                
+                // 🔥 ELIMINAMOS tapToSeek={true} 🔥
+                // Ya no lo necesitamos, nuestro hook hace el trabajo pesado y sin bugs.
+
                 onSlidingStart={(val) => {
                     setIsDragging(true);
                     setDragValue(val);
                 }}
-                onValueChange={(val) => setDragValue(val)}
+                onValueChange={(val) => {
+                    // Ahora esto fluirá a 60FPS siguiendo tu dedo
+                    setDragValue(val); 
+                }}
                 onSlidingComplete={async (val) => {
                     await TrackPlayer.seekTo(val);
-                    setTimeout(() => setIsDragging(false), 200); // Suaviza la transición
+                    setTimeout(() => setIsDragging(false), 200);
                 }}
             />
             <View style={styles.timeRow}>
