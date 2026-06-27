@@ -29,8 +29,8 @@ export default function GlassPanel({ artwork, children }: GlassPanelProps) {
                         >
                             <SkiaImage
                                 image={skiaImage}
-                                x={-50}
-                                y={-50}
+                                x={0}
+                                y={0}
                                 width={width + 100}
                                 height={height}
                                 fit="cover"
