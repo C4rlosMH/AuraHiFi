@@ -34,13 +34,19 @@ export const navidromeApi = {
         }));
     },
 
-    async getAllTracks(): Promise<Track[]> {
+    async getAllTracks(limit: number = 1000): Promise<Track[]> {
         try {
             const query = getAuthQuery();
-            console.log("🔥 URL EXACTA INTENTANDO CONECTAR:", BASE_URL);
-            const response = await fetch(`${BASE_URL}/search3.view?${query}&query=*`);
+            console.log("🔥 SOLICITANDO CATÁLOGO A NAVIDROME...");
+            
+            // Le agregamos &songCount=1000 para que nos devuelva todo tu catálogo de golpe
+            const url = `${BASE_URL}/search3.view?${query}&query=*&songCount=${limit}`;
+            
+            const response = await fetch(url);
             const data = await response.json();
             const songs = data['subsonic-response']?.searchResult3?.song || [];
+            
+            console.log(`✅ NAVIDROME DEVOLVIÓ: ${songs.length} CANCIONES`);
             return this.mapSongsToTracks(songs, query);
         } catch (error) {
             console.error("Error conectando con Navidrome:", error);
@@ -104,5 +110,34 @@ export const navidromeApi = {
             console.error("Error al obtener canciones de la playlist:", error);
             return [];
         }
+    },
+
+    // 🔥 NUEVA FUNCIÓN: Bypass de Navidrome para buscar letras exactas
+    async getSyncedLyricsFromLRCLIB(artist: string, title: string): Promise<string | null> {
+        try {
+            console.log(`Buscando letra sincronizada en LRCLIB para: ${title} - ${artist}`);
+            
+            const encodedArtist = encodeURIComponent(artist);
+            const encodedTitle = encodeURIComponent(title);
+            
+            // Endpoint público de LRCLIB
+            const url = `https://lrclib.net/api/get?artist_name=${encodedArtist}&track_name=${encodedTitle}`;
+            
+            const response = await fetch(url);
+            if (!response.ok) return null;
+            
+            const data = await response.json();
+            
+            // LRCLIB devuelve un campo 'syncedLyrics' que trae los tiempos exactos [00:15.30]
+            if (data && data.syncedLyrics) {
+                return data.syncedLyrics;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error("Error contactando a LRCLIB:", error);
+            return null;
+        }
     }
 };
+

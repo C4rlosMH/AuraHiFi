@@ -16,7 +16,7 @@ export default function PlayerBackground({ artwork }: PlayerBackgroundProps) {
             <Image 
                 source={{ uri: artwork }}
                 style={StyleSheet.absoluteFillObject}
-                blurRadius={4}
+                blurRadius={1}
                 resizeMode="cover"
             />
             {/* Capa de contraste ahumada */}

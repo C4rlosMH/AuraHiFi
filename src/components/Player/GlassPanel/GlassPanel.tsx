@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Canvas, Image as SkiaImage, useImage, Blur, Group } from '@shopify/react-native-skia';
+import { Canvas, Image as SkiaImage, useImage, Blur, ColorMatrix } from '@shopify/react-native-skia';
 import { styles } from './GlassPanel.styles';
 
 interface GlassPanelProps {
@@ -8,44 +8,62 @@ interface GlassPanelProps {
     children: React.ReactNode;
 }
 
-const { width, height } = Dimensions.get('window');
+// Obtenemos las dimensiones de TODA la pantalla
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const SATURATION_MATRIX = [
+    1.5, 0, 0, 0, -0.1,
+    0, 1.5, 0, 0, -0.1,
+    0, 0, 1.5, 0, -0.1,
+    0, 0, 0, 1, 0,
+];
 
 export default function GlassPanel({ artwork, children }: GlassPanelProps) {
-    // Skia lee la imagen directamente hacia la memoria de la GPU
     const skiaImage = useImage(artwork);
+    const viewRef = useRef<View>(null);
+    
+    // Guardaremos la posición Y exacta del panel en la pantalla
+    const [offsetY, setOffsetY] = useState(0);
+
+    // Esta función mide dónde está exactamente nuestro panel renderizado en el Poco X7 Pro
+    const handleLayout = () => {
+        viewRef.current?.measure((x, y, width, height, pageX, pageY) => {
+            // pageY es la distancia desde el top de la pantalla hasta nuestro panel
+            if (pageY > 0) {
+                setOffsetY(pageY);
+            }
+        });
+    };
 
     return (
-        <View style={styles.panelContainer}>
+        <View 
+            ref={viewRef}
+            onLayout={handleLayout}
+            style={[styles.panelContainer, { overflow: 'hidden' }]}
+        >
             {skiaImage && (
                 <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
                     <Canvas style={StyleSheet.absoluteFillObject}>
-                        <Group
-                            origin={{ x: width / 2, y: height / 4 }}
-                            transform={[
-                                { scale: 1.25 },
-                                { translateX: -12 },
-                                { translateY: 12 }
-                            ]}
+                        <SkiaImage
+                            image={skiaImage}
+                            // Mantenemos X en 0, pero subimos Y de forma inversa a la posición del panel
+                            x={0}
+                            y={-offsetY} 
+                            // Dibujamos la imagen al tamaño gigante de la pantalla
+                            width={SCREEN_WIDTH}
+                            height={SCREEN_HEIGHT}
+                            fit="cover"
                         >
-                            <SkiaImage
-                                image={skiaImage}
-                                x={0}
-                                y={0}
-                                width={width + 100}
-                                height={height}
-                                fit="cover"
-                            >
-                                {/* Aplicamos la propiedad correcta de Skia */}
-                                <Blur blur={8} />
-                            </SkiaImage>
-                        </Group>
+                            <ColorMatrix matrix={SATURATION_MATRIX} />
+                            <Blur blur={1} mode="clamp" />
+                        </SkiaImage>
                     </Canvas>
                 </View>
             )}
             
-            <View style={styles.contrastOverlay} />
+            {/* Tinte oscuro del cristal para la lectura de letras */}
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0, 0, 0, 0.30)' }]} />
             
-            {/* Contenido de la interfaz inyectado */}
             {children}
         </View>
     );

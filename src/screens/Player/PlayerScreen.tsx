@@ -15,6 +15,7 @@ import ScrubberBar from '../../components/Player/ScrubberBar/ScrubberBar';
 import ReproductionControls from '../../components/Player/Controls/ReproductionControls';
 import FooterActions from '../../components/Player/FooterActions/FooterActions';
 import QueuePanel from '../../components/Player/Queue/QueuePanel';
+import TrackLyrics from '../../components/Player/Lyrics/TrackLyrics';
 
 // --- Estilos ---
 import { styles } from './PlayerScreen.styles';
@@ -32,6 +33,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
     const [shuffleOn, setShuffleOn] = useState(false);
     const [repeatState, setRepeatState] = useState<RepeatMode>(RepeatMode.Off);
     const [showQueue, setShowQueue] = useState(false);
+    const [showLyrics, setShowLyrics] = useState(false);
     const [currentQueue, setCurrentQueue] = useState<any[]>([]);
 
     const activeTrack = useActiveTrack();
@@ -115,6 +117,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                 <View style={styles.content}>
                     <PlayerHeader title="Aura Player" onClose={onClose} />
 
+                    {/* 👇 AQUÍ VA LA LÓGICA DE LAS 3 VISTAS */}
                     {showQueue ? (
                         <View style={styles.queueListContainer}>
                             <QueuePanel 
@@ -130,6 +133,8 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                                 }}
                             />
                         </View>
+                    ) : showLyrics ? (
+                        <TrackLyrics /> /* <--- AQUÍ SE INSERTAN TUS LETRAS */
                     ) : (
                         <AlbumArtwork artwork={trackInfo?.artwork} />
                     )}
@@ -151,10 +156,17 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                         />
                     </GlassPanel>
 
+                    {/* 👇 AQUÍ ACTUALIZAMOS LOS BOTONES DEL FOOTER */}
                     <FooterActions 
                         showQueue={showQueue}
-                        onToggleQueue={() => setShowQueue(!showQueue)}
-                        onOpenLyrics={() => alert('Abriendo Lector')}
+                        onToggleQueue={() => {
+                            setShowQueue(!showQueue);
+                            if (showLyrics) setShowLyrics(false); // Cierra letras si abres cola
+                        }}
+                        onOpenLyrics={() => {
+                            setShowLyrics(!showLyrics);
+                            if (showQueue) setShowQueue(false); // Cierra cola si abres letras
+                        }}
                     />
                 </View>
             </View>
