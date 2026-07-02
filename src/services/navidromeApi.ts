@@ -138,6 +138,28 @@ export const navidromeApi = {
             console.error("Error contactando a LRCLIB:", error);
             return null;
         }
-    }
+    },
+
+    async getLyrics(artist: string, title: string): Promise<string | null> {
+        try {
+            const query = getAuthQuery();
+            const encodedArtist = encodeURIComponent(artist);
+            const encodedTitle = encodeURIComponent(title);
+            
+            const response = await fetch(`${BASE_URL}/getLyrics.view?${query}&artist=${encodedArtist}&title=${encodedTitle}`);
+            
+            if (!response.ok) return null;
+            
+            const data = await response.json();
+            
+            // La API de Subsonic/Navidrome normalmente expone el texto de la letra en este nodo
+            const lyrics = data['subsonic-response']?.lyrics?.value;
+            
+            return lyrics || null;
+        } catch (error) {
+            console.error("Error al obtener letras estáticas de Navidrome:", error);
+            return null;
+        }
+    },
 };
 
