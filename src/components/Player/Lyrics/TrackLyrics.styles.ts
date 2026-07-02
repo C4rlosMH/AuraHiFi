@@ -1,33 +1,28 @@
-import { StyleSheet, Dimensions } from 'react-native';
-
-const { height } = Dimensions.get('window');
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    // Relleno dinámico: 30% del alto de la pantalla para que las letras floten al centro
-    paddingVertical: height * 0.3, 
-    paddingHorizontal: 24,
-  },
-  lyricText: {
-    fontSize: 28, // Letra gigante y audaz
-    fontWeight: '800',
-    lineHeight: 38,
-    marginBottom: 20,
-    letterSpacing: -0.5, // Le da un toque más moderno y compacto
-  },
-  activeText: {
-    color: '#FFFFFF',
-    // Sombra sutil para que el texto resalte si el fondo es muy claro
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  inactiveText: {
-    // Mismo blanco, pero casi transparente
-    color: 'rgba(255, 255, 255, 0.35)', 
-  }
+    container: {
+        position: 'absolute',
+        top: 120,        // Empieza debajo del Header del reproductor
+        left: 0,
+        right: 0,
+        bottom: 250,       // Se extiende hasta el fondo de la pantalla cruzando por DETRÁS del GlassPanel
+        // ❌ ELIMINADO TOTALMENTE EL zIndex: -1
+    },
+    scrollContent: {
+        paddingHorizontal: 32,
+    },
+    lyricText: {
+        fontSize: 22,
+        fontWeight: '600',
+        lineHeight: 45,  // Mantén el 45 que usamos matemáticamente en el auto-scroll
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    activeText: {
+        color: '#FFFFFF',
+    },
+    inactiveText: {
+        color: 'rgba(255, 255, 255, 0.3)',
+    }
 });

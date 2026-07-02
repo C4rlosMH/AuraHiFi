@@ -115,9 +115,17 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                 <PlayerBackground artwork={trackInfo?.artwork} />
 
                 <View style={styles.content}>
-                    <PlayerHeader title="Aura Player" onClose={onClose} />
+                    {/* 🛠️ HEADER EVOLUCIONADO CON METADATOS Y CONTROL OFF-SCENE */}
+                    <PlayerHeader 
+                        onClose={onClose} 
+                        showLyrics={showLyrics}
+                        showQueue={showQueue}
+                        trackTitle={trackInfo?.title}
+                        trackArtist={trackInfo?.artist}
+                        artwork={trackInfo?.artwork}
+                    />
 
-                    {/* 👇 AQUÍ VA LA LÓGICA DE LAS 3 VISTAS */}
+                    {/* LÓGICA DE LAS 3 VISTAS CENTRALES */}
                     {showQueue ? (
                         <View style={styles.queueListContainer}>
                             <QueuePanel 
@@ -134,19 +142,31 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                             />
                         </View>
                     ) : showLyrics ? (
-                        <TrackLyrics /> /* <--- AQUÍ SE INSERTAN TUS LETRAS */
+                        <>
+                            {/* Ocupa el espacio dinámico vacío manteniendo al GlassPanel abajo */}
+                            <View style={{ flex: 1, width: '100%' }} />
+                            <TrackLyrics /> 
+                        </>
                     ) : (
                         <AlbumArtwork artwork={trackInfo?.artwork} />
                     )}
 
+                    {/* 💎 GLASSPANEL PREMIUM CON COLAPSO VERTICAL DINÁMICO */}
                     <GlassPanel artwork={trackInfo?.artwork}>
-                        <TrackMetadata 
-                            title={trackInfo?.title || 'Ninguna pista activa'} 
-                            artist={trackInfo?.artist || 'Selecciona música'} 
-                            isFavorite={isFavorite}
-                            onToggleFavorite={handleToggleFavorite}
-                        />
+                        {/* 🚫 OCULTAMIENTO INTELIGENTE: Si las letras o la cola están activas, 
+                            escondemos TrackMetadata para que el GlassPanel reduzca su tamaño vertical */}
+                        {(!showLyrics && !showQueue) && (
+                            <TrackMetadata 
+                                title={trackInfo?.title || 'Ninguna pista activa'} 
+                                artist={trackInfo?.artist || 'Selecciona música'} 
+                                isFavorite={isFavorite}
+                                onToggleFavorite={handleToggleFavorite}
+                            />
+                        )}
+                        
+                        {/* El ScrubberBar y los Controles de reproducción permanecen fijos abajo */}
                         <ScrubberBar />
+                        
                         <ReproductionControls 
                             isPlaying={isPlaying}
                             shuffleOn={shuffleOn}
@@ -156,16 +176,16 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                         />
                     </GlassPanel>
 
-                    {/* 👇 AQUÍ ACTUALIZAMOS LOS BOTONES DEL FOOTER */}
+                    {/* CONTROLES DEL FOOTER (MANTIENEN SU FLUJO) */}
                     <FooterActions 
                         showQueue={showQueue}
                         onToggleQueue={() => {
                             setShowQueue(!showQueue);
-                            if (showLyrics) setShowLyrics(false); // Cierra letras si abres cola
+                            if (showLyrics) setShowLyrics(false);
                         }}
                         onOpenLyrics={() => {
                             setShowLyrics(!showLyrics);
-                            if (showQueue) setShowQueue(false); // Cierra cola si abres letras
+                            if (showQueue) setShowQueue(false);
                         }}
                     />
                 </View>

@@ -1,24 +1,52 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { styles } from './PlayerHeader.styles';
 
 interface PlayerHeaderProps {
-    title: string;
     onClose: () => void;
+    showLyrics: boolean;
+    showQueue: boolean;
+    trackTitle?: string;
+    trackArtist?: string;
+    artwork?: string;
+    onOpenOptions?: () => void;
 }
 
-export default function PlayerHeader({ title, onClose }: PlayerHeaderProps) {
+export const PlayerHeader: React.FC<PlayerHeaderProps> = ({
+    onClose,
+    showLyrics,
+    showQueue,
+    trackTitle,
+    trackArtist,
+    artwork,
+    onOpenOptions
+}) => {
+    const isContextActive = showLyrics || showQueue;
+
     return (
-        <View style={styles.headerRow}>
-            <TouchableOpacity onPress={onClose}>
-                <View style={styles.glassCircle}>
-                    <MaterialIcons name="keyboard-arrow-down" size={30} color="#ffffff" />
-                </View>
+        <View style={styles.headerContainer}>
+            <TouchableOpacity onPress={onClose} style={styles.frostedButton}>
+                <Ionicons name="chevron-down" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{title}</Text>
-            {/* Espacio vacío de 48px para centrar el título matemáticamente */}
-            <View style={{ width: 48 }} /> 
+
+            {isContextActive && trackTitle ? (
+                <View style={styles.metaContextContainer}>
+                    {artwork && <Image source={{ uri: artwork }} style={styles.miniArtwork} />}
+                    <View style={styles.textContainer}>
+                        <Text numberOfLines={1} style={styles.contextTitle}>{trackTitle}</Text>
+                        <Text numberOfLines={1} style={styles.contextArtist}>{trackArtist}</Text>
+                    </View>
+                </View>
+            ) : (
+                <View style={styles.emptyCenter} />
+            )}
+
+            <TouchableOpacity onPress={onOpenOptions || (() => {})} style={styles.frostedButton}>
+                <Ionicons name="ellipsis-horizontal" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
         </View>
     );
-}
+};
+
+export default PlayerHeader;

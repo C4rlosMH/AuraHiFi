@@ -20,12 +20,12 @@ export const styles = StyleSheet.create({
         // 📐 ALINEACIÓN MATEMÁTICA PERFECTA
         width: width * 0.85,     // Mismo ancho exacto que tu portada (85%)
         alignSelf: 'center',     // Lo forzamos al centro para que encaje como bloque
-        marginBottom: 20,        // Separación inferior
+        marginBottom: 15,        // Separación inferior
         
-        backgroundColor: 'rgba(15, 15, 15, 0.25)', 
+        backgroundColor: 'rgba(20, 20, 20, 0.55)', 
     },
     contentContainer: {
-        paddingVertical: 22,
+        paddingVertical: 20,
         paddingHorizontal: 20,
     }
 });

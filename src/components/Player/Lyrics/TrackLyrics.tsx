@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Text, ScrollView, View, ActivityIndicator } from 'react-native';
 import { useActiveTrack, useProgress } from 'react-native-track-player';
 import { navidromeApi } from '../../../services/navidromeApi';
@@ -9,8 +9,11 @@ export default function TrackLyrics() {
   const track = useActiveTrack();
   const { position } = useProgress(); 
   
+  // 🖐️ Nuestra "mano invisible" para hacer el scroll
+  const scrollViewRef = useRef<ScrollView>(null);
+  
   const [lyrics, setLyrics] = useState<ParsedLyric[]>([]);
-  const [staticLyrics, setStaticLyrics] = useState<string | null>(null); // 🔥 NUEVO ESTADO
+  const [staticLyrics, setStaticLyrics] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +25,7 @@ export default function TrackLyrics() {
       setStaticLyrics(null);
       
       try {
-        // 1. PRIMERA CAPA: Intentar obtener letras sincronizadas perfectas de LRCLIB
+        // 1. PRIMERA CAPA: LRCLIB (Letras sincronizadas)
         const syncedLyrics = await navidromeApi.getSyncedLyricsFromLRCLIB(track.artist, track.title);
         
         if (syncedLyrics) {
@@ -30,11 +33,11 @@ export default function TrackLyrics() {
           if (parsed.length > 0) {
             setLyrics(parsed);
             setIsLoading(false);
-            return; // ¡Éxito total! Terminamos aquí.
+            return;
           }
         }
 
-        // 2. SEGUNDA CAPA: Si LRCLIB no tuvo nada, preguntamos a Navidrome
+        // 2. SEGUNDA CAPA: Navidrome (Plan de respaldo)
         console.log("LRCLIB no encontró tiempos, consultando Navidrome...");
         const rawLyrics = await navidromeApi.getLyrics(track.artist, track.title);
         
@@ -43,7 +46,6 @@ export default function TrackLyrics() {
           if (parsed.length > 0) {
             setLyrics(parsed);
           } else {
-            // Si Navidrome tampoco tiene tiempos, guardamos la letra plana
             setStaticLyrics(rawLyrics);
           }
         }
@@ -71,6 +73,24 @@ export default function TrackLyrics() {
 
   const activeIndex = getActiveIndex();
 
+  // 🎬 MOTOR DE CINEMÁTICA (AUTO-SCROLL)
+  useEffect(() => {
+    if (activeIndex !== -1 && scrollViewRef.current) {
+      const LINE_HEIGHT = 45; 
+      
+      // CAMBIO MATEMÁTICO:
+      // En lugar de restar 150 estáticos, calculamos el punto dulce.
+      // Al tener un colchón arriba, la coordenada Y inicial cambia para que la 
+      // línea activa siempre quede perfectamente centrada a la vista.
+      const offsetY = activeIndex * LINE_HEIGHT; 
+      
+      scrollViewRef.current.scrollTo({
+        y: offsetY, 
+        animated: true, 
+      });
+    }
+  }, [activeIndex]);
+
   if (isLoading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -87,13 +107,17 @@ export default function TrackLyrics() {
     );
   }
 
-  return (
+return (
     <ScrollView 
+      ref={scrollViewRef} 
       style={styles.container}
       showsVerticalScrollIndicator={false}
+      // Cambiamos a contentContainerStyle para inyectar los espacios vacíos
       contentContainerStyle={styles.scrollContent}
     >
-      {/* RENDERIZADO CONDICIONAL: Sincronizadas vs Planas */}
+      {/* 🌤️ ESPACIADOR SUPERIOR: Empuja la primera línea al centro/mitad de la pantalla */}
+      <View style={{ height: 220 }} /> 
+
       {lyrics.length > 0 ? (
         lyrics.map((line, index) => {
           const isActive = index === activeIndex;
@@ -110,11 +134,13 @@ export default function TrackLyrics() {
           );
         })
       ) : (
-        // 🔥 VISTA DE LETRAS ESTÁTICAS
         <Text style={[styles.lyricText, styles.activeText, { textAlign: 'center' }]}>
           {staticLyrics}
         </Text>
       )}
+
+      {/* 🕳️ ESPACIADOR INFERIOR: Le da carril al scroll para subir las últimas líneas */}
+      <View style={{ height: 350 }} />
     </ScrollView>
   );
 }
