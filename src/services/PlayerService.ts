@@ -133,8 +133,13 @@ class PlayerService {
                     }));
 
                     // 4. Inyectar limpiamente en el motor
-                    for (let i = nativeQueue.length - 1; i > currentTrackIndex; i--) {
-                        await TrackPlayer.remove(i);
+                    const indexesToRemove = [];
+                    for (let i = currentTrackIndex + 1; i < nativeQueue.length; i++) {
+                        indexesToRemove.push(i);
+                    }
+                    if (indexesToRemove.length > 0) {
+                        // Borramos todos de un solo golpe
+                        await TrackPlayer.remove(indexesToRemove);
                     }
                     await TrackPlayer.add(nativeUpcoming);
                     
@@ -155,8 +160,13 @@ class PlayerService {
                         artwork: item.coverArtUrl
                     }));
 
-                    for (let i = nativeQueue.length - 1; i > currentTrackIndex; i--) {
-                        await TrackPlayer.remove(i);
+                    const indexesToRemove = [];
+                    for (let i = currentTrackIndex + 1; i < nativeQueue.length; i++) {
+                        indexesToRemove.push(i);
+                    }
+                    if (indexesToRemove.length > 0) {
+                        // Borramos todos de un solo golpe
+                        await TrackPlayer.remove(indexesToRemove);
                     }
                     await TrackPlayer.add(nativeUpcomingOriginal);
                     console.log(`[SHUFFLE] Orden natural restaurado.`);

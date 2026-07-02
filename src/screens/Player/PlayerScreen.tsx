@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Modal, Animated, PanResponder, Dimensions } from 'react-native';
 import TrackPlayer, { RepeatMode, useActiveTrack } from 'react-native-track-player';
 
 // --- Servicios ---
@@ -20,6 +20,8 @@ import TrackLyrics from '../../components/Player/Lyrics/TrackLyrics';
 // --- Estilos ---
 import { styles } from './PlayerScreen.styles';
 
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
 interface PlayerScreenProps {
     isVisible: boolean;
     onClose: () => void;
@@ -38,10 +40,61 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
 
     const activeTrack = useActiveTrack();
 
+    // GESTOS Y ANIMACIONES
+    const translateY = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (isVisible) {
+            translateY.setValue(0);
+        }
+    }, [isVisible]);
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => false,
+            onMoveShouldSetPanResponder: (evt, gestureState) => {
+                return gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+            },
+            onPanResponderMove: (evt, gestureState) => {
+                if (gestureState.dy > 0) {
+                    translateY.setValue(gestureState.dy);
+                }
+            },
+            onPanResponderRelease: (evt, gestureState) => {
+                if (gestureState.dy > 120 || gestureState.vy > 0.5) {
+                    Animated.timing(translateY, {
+                        toValue: SCREEN_HEIGHT,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start(() => {
+                        onClose();
+                    });
+                } else {
+                    Animated.spring(translateY, {
+                        toValue: 0,
+                        friction: 6,
+                        tension: 40,
+                        useNativeDriver: true,
+                    }).start();
+                }
+            },
+        })
+    ).current;
+
     const refreshQueueData = async () => {
         try {
             const nativeQueue = await TrackPlayer.getQueue();
-            setCurrentQueue(nativeQueue);
+            const currentIndex = await TrackPlayer.getCurrentTrack();
+
+            if (currentIndex !== null && currentIndex !== undefined) {
+                const upcomingTracks = nativeQueue.slice(currentIndex).map((track, idx) => ({
+                    ...track,
+                    nativeIndex: currentIndex + idx 
+                }));
+                setCurrentQueue(upcomingTracks);
+            } else {
+                setCurrentQueue([]);
+            }
         } catch (e) {
             console.error('Error al refrescar cola:', e);
         }
@@ -90,8 +143,13 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
     };
 
     const handleToggleShuffle = async () => {
-        const next = !shuffleOn;
-        setShuffleOn(next);
+        try {
+            const newState = await playerService.toggleShuffle();
+            setShuffleOn(newState);
+            await refreshQueueData();
+        } catch (error) {
+            console.error("Error al sincronizar el Shuffle con la UI:", error);
+        }
     };
 
     const handleCycleRepeat = async () => {
@@ -107,25 +165,30 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
         }
     };
 
-    // EL ENSAMBLAJE (VISTA)
     return (
         <Modal visible={isVisible} animationType="slide" transparent={true} onRequestClose={onClose}>
-            <View style={styles.modalContainer}>
+            {/* 🚀 SOLUCIÓN: El Animated.View ahora es el contenedor RAÍZ. Todo bajará al mismo tiempo */}
+            <Animated.View style={[styles.modalContainer, { transform: [{ translateY: translateY }] }]}>
                 
+                {/* 🎨 El fondo ahora está DENTRO del bloque animado */}
                 <PlayerBackground artwork={trackInfo?.artwork} />
 
+                {/* El contenedor de contenido vuelve a ser un View normal */}
                 <View style={styles.content}>
-                    {/* 🛠️ HEADER EVOLUCIONADO CON METADATOS Y CONTROL OFF-SCENE */}
-                    <PlayerHeader 
-                        onClose={onClose} 
-                        showLyrics={showLyrics}
-                        showQueue={showQueue}
-                        trackTitle={trackInfo?.title}
-                        trackArtist={trackInfo?.artist}
-                        artwork={trackInfo?.artwork}
-                    />
+                    
+                    {/* Zona limpia del Gesto del Header */}
+                    <View {...panResponder.panHandlers} style={styles.headerGestureContainer}>
+                        <PlayerHeader 
+                            onClose={onClose} 
+                            showLyrics={showLyrics}
+                            showQueue={showQueue}
+                            trackTitle={trackInfo?.title}
+                            trackArtist={trackInfo?.artist}
+                            artwork={trackInfo?.artwork}
+                        />
+                    </View>
 
-                    {/* LÓGICA DE LAS 3 VISTAS CENTRALES */}
+                    {/* Vistas Centrales Dinámicas */}
                     {showQueue ? (
                         <View style={styles.queueListContainer}>
                             <QueuePanel 
@@ -143,18 +206,18 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                         </View>
                     ) : showLyrics ? (
                         <>
-                            {/* Ocupa el espacio dinámico vacío manteniendo al GlassPanel abajo */}
-                            <View style={{ flex: 1, width: '100%' }} />
+                            <View style={styles.lyricsSpacer} />
                             <TrackLyrics /> 
                         </>
                     ) : (
-                        <AlbumArtwork artwork={trackInfo?.artwork} />
+                        /* Zona limpia del Gesto de la Portada */
+                        <View {...panResponder.panHandlers} style={styles.artworkGestureContainer}>
+                            <AlbumArtwork artwork={trackInfo?.artwork} />
+                        </View>
                     )}
 
-                    {/* 💎 GLASSPANEL PREMIUM CON COLAPSO VERTICAL DINÁMICO */}
+                    {/* Panel de Controles e Información */}
                     <GlassPanel artwork={trackInfo?.artwork}>
-                        {/* 🚫 OCULTAMIENTO INTELIGENTE: Si las letras o la cola están activas, 
-                            escondemos TrackMetadata para que el GlassPanel reduzca su tamaño vertical */}
                         {(!showLyrics && !showQueue) && (
                             <TrackMetadata 
                                 title={trackInfo?.title || 'Ninguna pista activa'} 
@@ -164,7 +227,6 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                             />
                         )}
                         
-                        {/* El ScrubberBar y los Controles de reproducción permanecen fijos abajo */}
                         <ScrubberBar />
                         
                         <ReproductionControls 
@@ -176,7 +238,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                         />
                     </GlassPanel>
 
-                    {/* CONTROLES DEL FOOTER (MANTIENEN SU FLUJO) */}
+                    {/* Footer */}
                     <FooterActions 
                         showQueue={showQueue}
                         onToggleQueue={() => {
@@ -189,7 +251,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                         }}
                     />
                 </View>
-            </View>
+            </Animated.View>
         </Modal>
     );
 }

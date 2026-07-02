@@ -9,20 +9,17 @@ export const styles = StyleSheet.create({
         overflow: 'hidden', 
         
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.15)',     // El contorno general casi invisible
-        
-        borderTopWidth: 1.2,
-        borderTopColor: 'rgba(255, 255, 255, 0.18)',  // El "golpe" de luz intenso arriba
-        
-        borderLeftWidth: 1.3,
-        borderLeftColor: 'rgba(255, 255, 255, 0.06)',  // Caída de luz lateral más suave
-        
+        borderColor: 'rgba(255, 255, 255, 0.03)',
+        borderTopWidth: 1.5,
+        borderTopColor: 'rgba(255, 255, 255, 0.22)',
+        borderLeftWidth: 1.2,
+        borderLeftColor: 'rgba(255, 255, 255, 0.08)',
         // 📐 ALINEACIÓN MATEMÁTICA PERFECTA
         width: width * 0.85,     // Mismo ancho exacto que tu portada (85%)
         alignSelf: 'center',     // Lo forzamos al centro para que encaje como bloque
         marginBottom: 15,        // Separación inferior
         
-        backgroundColor: 'rgba(20, 20, 20, 0.55)', 
+        backgroundColor: 'rgba(15, 15, 15, 0.35)',
     },
     contentContainer: {
         paddingVertical: 20,

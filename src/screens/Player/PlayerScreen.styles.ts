@@ -16,5 +16,18 @@ export const styles = StyleSheet.create({
     queueListContainer: {
         flex: 1,
         marginTop: 15,
-    }
+    },
+    headerGestureContainer: {
+        width: '100%',
+    },
+    artworkGestureContainer: {
+        flex: 1,
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    lyricsSpacer: {
+        flex: 1,
+        width: '100%',
+    },
 });

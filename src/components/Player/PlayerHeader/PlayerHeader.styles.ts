@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
+        paddingHorizontal: 5,
         height: 30,
         marginTop: Platform.OS === 'android' ? 15 : 0, 
         width: '100%',
@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
         ...frosted, // ⚡ Inyectamos las propiedades del cristal esmerilado
         width: 42,
         height: 40,
-        borderRadius: 14, // Forzamos un radio más cerrado para botones pequeños
+        borderRadius: 15, // Forzamos un radio más cerrado para botones pequeños
         justifyContent: 'center',
         alignItems: 'center',
     },
