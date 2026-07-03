@@ -16,6 +16,7 @@ export interface Track {
     duration: number;
     coverArtUrl: string;
     streamUrl: string;
+    starred: boolean; // Nuevo campo para indicar si la canción es favorita
 }
 
 export const navidromeApi = {
@@ -30,7 +31,8 @@ export const navidromeApi = {
             coverArtUrl: song.coverArt 
                 ? `${BASE_URL}/getCoverArt.view?${query}&id=${song.coverArt}&size=300` 
                 : 'https://via.placeholder.com/300/1E1E1E/FFFFFF?text=Sin+Portada',
-            streamUrl: `${BASE_URL}/stream.view?${query}&id=${song.id}`
+            streamUrl: `${BASE_URL}/stream.view?${query}&id=${song.id}`,
+            starred: !!song.starred
         }));
     },
 

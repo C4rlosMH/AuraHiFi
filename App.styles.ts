@@ -113,5 +113,18 @@ export const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
         letterSpacing: 1
-    }
+    },
+    miniPlayerContainer: {
+        position: 'absolute',
+        bottom: 75, // <-- CLAVE: Lo elevamos justo por encima del Navbar (65px) + 10px de margen
+        left: 10,
+        right: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'rgba(30, 30, 30, 0.95)',
+        padding: 10,
+        borderRadius: 12,
+        // (mantén los estilos de bordes o sombras que ya tenías)
+    },
 });
