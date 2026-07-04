@@ -8,6 +8,7 @@ import { pinService, PinItem } from '../../services/PinService';
 import { playerService } from '../../services/PlayerService'; // Lo usaremos para reproducir
 
 // --- Componentes ---
+import AuraBackground from '../../components/AuraBackground/AuraBackground';
 import CollectionHeader from '../../components/CollectionDetail/Header/CollectionHeader';
 import CollectionCover from '../../components/CollectionDetail/Cover/CollectionCover';
 import CollectionMetadata from '../../components/CollectionDetail/Metadata/CollectionMetadata';
@@ -131,48 +132,52 @@ export default function CollectionDetailScreen() {
     // Pantalla de Carga
     if (isLoading || !details) {
         return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={colors.accent} />
-            </View>
+            <AuraBackground>
+                <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                    <ActivityIndicator size="large" color={colors.accent} />
+                </View>
+            </AuraBackground>
         );
     }
 
     // Interfaz Principal Ensamblada
     return (
-        <View style={styles.container}>
-            
-            {/* 1. Header con efecto Frosted (Flotante) */}
-            <CollectionHeader 
-                onBack={() => navigation.goBack()} 
-                onOptions={() => console.log("Opciones de colección abiertas")} 
-            />
-
-            {/* 2. Cuerpo Deslizable */}
-            <ScrollView showsVerticalScrollIndicator={false}>
+        <AuraBackground>
+            <View style={styles.container}>
                 
-                <CollectionCover coverArtUrl={details.coverArtUrl} />
-                
-                <CollectionMetadata 
-                    title={details.title} 
-                    subtitle={details.artist || details.owner} 
-                />
-                
-                <CollectionActions 
-                    isLiked={isLiked}
-                    isPinned={isPinned}
-                    isDownloaded={isDownloaded}
-                    onToggleLike={handleToggleLike}
-                    onTogglePin={handleTogglePin}
-                    onDownload={handleDownload}
-                    onPlayAll={handlePlayAll}
+                {/* 1. Header con efecto Frosted (Flotante) */}
+                <CollectionHeader 
+                    onBack={() => navigation.goBack()} 
+                    onOptions={() => console.log("Opciones de colección abiertas")} 
                 />
 
-                <CollectionTrackList 
-                    tracks={details.tracks} 
-                    onPlayTrack={handlePlayTrack} 
-                />
+                {/* 2. Cuerpo Deslizable */}
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    
+                    <CollectionCover coverArtUrl={details.coverArtUrl} />
+                    
+                    <CollectionMetadata 
+                        title={details.title} 
+                        subtitle={details.artist || details.owner} 
+                    />
+                    
+                    <CollectionActions 
+                        isLiked={isLiked}
+                        isPinned={isPinned}
+                        isDownloaded={isDownloaded}
+                        onToggleLike={handleToggleLike}
+                        onTogglePin={handleTogglePin}
+                        onDownload={handleDownload}
+                        onPlayAll={handlePlayAll}
+                    />
 
-            </ScrollView>
-        </View>
+                    <CollectionTrackList 
+                        tracks={details.tracks} 
+                        onPlayTrack={handlePlayTrack} 
+                    />
+
+                </ScrollView>
+            </View>
+        </AuraBackground>
     );
 }
