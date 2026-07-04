@@ -1,49 +1,63 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { colors } from '../../../styles/theme';
+
+const { width } = Dimensions.get('window');
+// Matemáticas: Ancho total - 40px (padding pantalla) - 20px (dos espacios de gap de 10px) = Dividido entre 3
+const cardWidth = Math.floor((width - 60) / 3);
 
 export const styles = StyleSheet.create({
     cardContainer: {
-        width: '48%', // Permite 2 columnas con un pequeño espacio en medio
-        aspectRatio: 1, // La hace un cuadrado perfecto
-        borderRadius: 16,
-        overflow: 'hidden', // Evita que la imagen se salga de los bordes redondeados
-        marginBottom: 15,
+        width: cardWidth,
+        marginBottom: 16, // Espacio para separar visualmente las filas hacia abajo
+    },
+    imageContainer: {
+        width: cardWidth,
+        height: cardWidth, // Forzamos a que solo la imagen sea el cuadrado perfecto
+        borderRadius: 12,
         backgroundColor: colors.surface,
+        marginBottom: 8, // Separación limpia entre la imagen y el texto
         
-        // Sutil brillo exterior para dar aspecto de cristal/premium
+        // Sutil brillo exterior para dar aspecto premium a la carátula
         borderWidth: 1,
         borderColor: colors.glassDark,
+        
+        // Sombra para despegar el disco del fondo oscuro de la app
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
     },
-    backgroundImage: {
+    image: {
         width: '100%',
         height: '100%',
+        borderRadius: 11, // Ligeramente menor para encajar perfecto en el borde
+    },
+    pinBadge: {
         position: 'absolute',
+        top: 6,
+        right: 6,
+        //backgroundColor: colors.accent, // Círculo del color de acento
+        borderRadius: 12,
+        padding: 4,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 2,
     },
-    overlay: {
-        flex: 1,
-        justifyContent: 'flex-end', // Empuja los textos hacia abajo
-        padding: 12,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)', // Oscurece la imagen para que el texto sea legible
-    },
-    pinIcon: {
-        marginBottom: 4,
-        // Sombra en el icono para que resalte sobre cualquier portada clara
-        textShadowColor: 'rgba(0, 0, 0, 0.8)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 3,
+    infoContainer: {
+        alignItems: 'flex-start',
+        paddingHorizontal: 2, // Para que el texto alinee sutilmente con el borde de la carátula
     },
     title: {
         color: colors.primary,
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '700',
-        textShadowColor: 'rgba(0, 0, 0, 0.8)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 3,
+        marginBottom: 2,
     },
     subtitle: {
         color: colors.textMuted,
         fontSize: 11,
-        marginTop: 2,
-        fontWeight: '500',
-    },
+    }
 });

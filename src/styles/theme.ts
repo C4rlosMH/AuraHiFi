@@ -1,8 +1,9 @@
 export const colors = {
     background: '#0a0a0c',
     primary: '#ffffff',
-    accent: '#00ffcc',
+    accent: '#3D3DD5',
     premium: '#d4af37',
+    light: '#7B7BEA',
     surface: '#1c1c1e',
     border: 'rgba(255, 255, 255, 0.12)',
     glassDark: 'rgba(255, 255, 255, 0.06)',

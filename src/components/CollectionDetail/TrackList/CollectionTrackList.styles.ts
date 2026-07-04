@@ -3,8 +3,8 @@ import { colors } from '../../../styles/theme';
 
 export const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: 10,
-        paddingTop: 10,
+        paddingHorizontal: 20,
+        paddingTop: 15,
         paddingBottom: 140, // Espacio al fondo para que la última canción no quede pegada
     },
     trackRow: {

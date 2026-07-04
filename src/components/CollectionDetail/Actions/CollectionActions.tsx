@@ -31,7 +31,7 @@ export default function CollectionActions({
                     <Ionicons 
                         name={isLiked ? "heart" : "heart-outline"} 
                         size={26} 
-                        color={isLiked ? colors.accent : colors.primary} 
+                        color={isLiked ? colors.light : colors.primary} 
                     />
                 </TouchableOpacity>
 
@@ -40,7 +40,7 @@ export default function CollectionActions({
                     <Ionicons 
                         name={isPinned ? "pin" : "pin-outline"} 
                         size={26} 
-                        color={isPinned ? colors.accent : colors.primary} 
+                        color={isPinned ? colors.light : colors.primary} 
                     />
                 </TouchableOpacity>
 
@@ -49,7 +49,7 @@ export default function CollectionActions({
                     <Ionicons 
                         name={isDownloaded ? "arrow-down-circle" : "arrow-down-circle-outline"} 
                         size={26} 
-                        color={isDownloaded ? colors.accent : colors.primary} 
+                        color={isDownloaded ? colors.light : colors.primary} 
                     />
                 </TouchableOpacity>
             </View>

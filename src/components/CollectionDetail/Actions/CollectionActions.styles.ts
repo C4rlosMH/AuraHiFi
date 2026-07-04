@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 15,
+        paddingVertical: 0,
     },
     leftActions: {
         flexDirection: 'row',
@@ -21,12 +21,12 @@ export const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: colors.accent,
+        backgroundColor: colors.light, // Color dorado premium para el botón de Play
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 6,
         // Brillo sutil del color accent
-        shadowColor: colors.accent,
+        shadowColor: colors.light,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

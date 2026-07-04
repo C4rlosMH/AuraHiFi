@@ -9,9 +9,11 @@ import { colors } from '../../styles/theme';
 import { styles } from './LibraryScreen.styles'; // 🚀 IMPORTACIÓN CORRECTA
 
 // --- Componentes Modulares ---
+import AuraBackground from '../../components/AuraBackground/AuraBackground';
 import LibraryHeader from '../../components/Library/LibraryHeader/LibraryHeader';
 import PinnedGrid from '../../components/Library/PinnedGrid/PinnedGrid';
 import CollapsibleSection from '../../components/Library/CollapsibleSection/CollapsibleSection';
+import CollectionGrid from '../../components/Library/CollectionGrid/CollectionGrid'; // 🚀 NUEVO COMPONENTE
 import ListRowCard from '../../components/Library/CollapsibleSection/ListRowCard';
 import LibraryFAB from '../../components/Library/LibraryFAB/LibraryFAB';
 import CategoryFilter from '../../components/Library/CategoryFilter/CategoryFilter';
@@ -74,65 +76,69 @@ export default function LibraryScreen() {
 
     if (isLoading) {
         return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={colors.accent} />
-            </View>
+            <AuraBackground>
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color={colors.accent} />
+                </View>
+            </AuraBackground>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <ScrollView 
-                contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-            >
-                <LibraryHeader />
+        <AuraBackground>
+            <View style={styles.container}>
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+                >
+                    <LibraryHeader />
 
-                <CategoryFilter 
-                    onSelectCategory={(categoria) => {
-                        console.log("Filtrar la vista por:", categoria);
-                    }} 
-                />
-
-                {/* 🚀 CONDICIÓN UX MAESTRA: Solo si hay pines, pintamos la grilla superior */}
-                {localPins.length > 0 && (
-                    <PinnedGrid 
-                        title="Pins" 
-                        data={localPins} 
-                        onItemPress={(id, title) => {
-                            // Buscamos qué tipo era el pin para mapearlo correctamente
-                            const clickedPin = localPins.find(p => p.id === id);
-                            handleOpenCollection(id, title, clickedPin?.type || 'album');
+                    <CategoryFilter 
+                        onSelectCategory={(categoria) => {
+                            console.log("Filtrar la vista por:", categoria);
                         }} 
-                        isPinnedSection={true} 
                     />
-                )}
 
-                {/* 2. RECIENTEMENTE AGREGADOS */}
-                <CollapsibleSection title="Agregado recientemente">
-                    {recentAlbums.map((album) => (
-                        <ListRowCard
-                            key={`recent-${album.id}`}
-                            id={album.id}
-                            title={album.title}
-                            subtitle={`Álbum • ${album.artist}`}
-                            imageUrl={album.coverArtUrl}
-                            onPress={() => handleOpenCollection(album.id, album.title, 'album')}
+                    {/* 🚀 CONDICIÓN UX MAESTRA: Solo si hay pines, pintamos la grilla superior */}
+                    {localPins.length > 0 && (
+                        <PinnedGrid 
+                            title="Pins" 
+                            data={localPins} 
+                            onItemPress={(id, title) => {
+                                const clickedPin = localPins.find(p => p.id === id);
+                                handleOpenCollection(id, title, clickedPin?.type || 'album');
+                            }} 
+                            isPinnedSection={true} 
                         />
-                    ))}
-                </CollapsibleSection>
+                    )}
 
-                {/* 3. TU COLECCIÓN COMPLETA */}
-                <PinnedGrid 
-                    title="Tu Colección" 
-                    data={allAlbums} 
-                    onItemPress={(id, title) => handleOpenCollection(id, title, 'album')} 
-                    isPinnedSection={false} 
-                />
-                
-            </ScrollView>
+                    {/* 2. RECIENTEMENTE AGREGADOS */}
+                    <CollapsibleSection title="Agregado recientemente">
+                        {recentAlbums.slice(0, 9).map((album) => (
+                            <ListRowCard
+                                key={`recent-${album.id}`}
+                                id={album.id}
+                                title={album.title}
+                                subtitle={album.artist}
+                                imageUrl={album.coverArtUrl}
+                                onPress={() => handleOpenCollection(album.id, album.title, 'album')}
+                            />
+                        ))}
+                    </CollapsibleSection>
 
-            <LibraryFAB onPress={() => console.log('Crear Playlist')} />
-        </View>
+                    {/* 3. TU COLECCIÓN (Exclusiva, Fija y simétrica al 100% con los Pins) */}
+                    {allAlbums.length > 0 && (
+                        <CollectionGrid 
+                            title="Tu Colección"
+                            data={allAlbums}
+                            onItemPress={(id, title) => handleOpenCollection(id, title, 'album')}
+                        />
+                    )}
+                    
+                </ScrollView>
+
+                <LibraryFAB onPress={() => console.log('Crear Playlist')} />
+            </View>
+        </AuraBackground>
     );
 }

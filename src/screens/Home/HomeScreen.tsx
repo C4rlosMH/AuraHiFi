@@ -5,6 +5,9 @@ import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, Refre
 import { navidromeApi, Track } from '../../services/navidromeApi';
 import { playerService } from '../../services/PlayerService';
 
+// --- Componentes ---
+import AuraBackground from '../../components/AuraBackground/AuraBackground';
+
 // --- Estilos ---
 import { styles } from './HomeScreen.styles';
 
@@ -50,53 +53,57 @@ export default function HomeScreen() {
 
     if (isLoading) {
         return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#00ffcc" />
-            </View>
+            <AuraBackground>
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color="#00ffcc" />
+                </View>
+            </AuraBackground>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.headerTitle}>AURA HI-FI</Text>
-            
-            <FlatList
-                data={tracks}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContainer}
-                refreshControl={
-                    <RefreshControl 
-                        refreshing={isRefreshing} 
-                        onRefresh={onRefresh}
-                        tintColor="#00ffcc"
-                        colors={['#00ffcc']}
-                        progressBackgroundColor="#1a1a1a"
-                    />
-                }
-                renderItem={({ item }) => (
-                    <TouchableOpacity 
-                        style={styles.trackCard} 
-                        onPress={() => playerService.playCollection(item, tracks)}
-                    >
-                        <Image source={{ uri: item.coverArtUrl }} style={styles.coverImage} />
-                        
-                        <View style={styles.trackInfo}>
-                            <Text style={styles.trackTitle} numberOfLines={1}>{item.title}</Text>
-                            <Text style={styles.trackArtist}>{item.artist} - {item.album}</Text>
-                        </View>
-                        
+        <AuraBackground>
+            <View style={styles.container}>
+                <Text style={styles.headerTitle}>AURA HI-FI</Text>
+                
+                <FlatList
+                    data={tracks}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={styles.listContainer}
+                    refreshControl={
+                        <RefreshControl 
+                            refreshing={isRefreshing} 
+                            onRefresh={onRefresh}
+                            tintColor="#00ffcc"
+                            colors={['#00ffcc']}
+                            progressBackgroundColor="#1a1a1a"
+                        />
+                    }
+                    renderItem={({ item }) => (
                         <TouchableOpacity 
-                            onPress={() => handleToggleFavorite(item.id)}
-                            style={styles.likeButton}
+                            style={styles.trackCard} 
+                            onPress={() => playerService.playCollection(item, tracks)}
                         >
-                            {/* Corazón relleno si es fav, contorno si no */}
-                            <Text style={[styles.likeText, item.starred && styles.likeTextActive]}>
-                                {item.starred ? '♥' : '♡'}
-                            </Text>
+                            <Image source={{ uri: item.coverArtUrl }} style={styles.coverImage} />
+                            
+                            <View style={styles.trackInfo}>
+                                <Text style={styles.trackTitle} numberOfLines={1}>{item.title}</Text>
+                                <Text style={styles.trackArtist}>{item.artist} - {item.album}</Text>
+                            </View>
+                            
+                            <TouchableOpacity 
+                                onPress={() => handleToggleFavorite(item.id)}
+                                style={styles.likeButton}
+                            >
+                                {/* Corazón relleno si es fav, contorno si no */}
+                                <Text style={[styles.likeText, item.starred && styles.likeTextActive]}>
+                                    {item.starred ? '♥' : '♡'}
+                                </Text>
+                            </TouchableOpacity>
                         </TouchableOpacity>
-                    </TouchableOpacity>
-                )}
-            />
-        </View>
+                    )}
+                />
+            </View>
+        </AuraBackground>
     );
 }

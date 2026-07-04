@@ -142,7 +142,7 @@ export default function CollectionDetailScreen() {
 
     // Interfaz Principal Ensamblada
     return (
-        <AuraBackground>
+        <AuraBackground coverUrl={details.coverArtUrl}>
             <View style={styles.container}>
                 
                 {/* 1. Header con efecto Frosted (Flotante) */}
@@ -152,24 +152,29 @@ export default function CollectionDetailScreen() {
                 />
 
                 {/* 2. Cuerpo Deslizable */}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    style={{ backgroundColor: 'transparent' }} 
+                >
                     
                     <CollectionCover coverArtUrl={details.coverArtUrl} />
                     
-                    <CollectionMetadata 
-                        title={details.title} 
-                        subtitle={details.artist || details.owner} 
-                    />
-                    
-                    <CollectionActions 
-                        isLiked={isLiked}
-                        isPinned={isPinned}
-                        isDownloaded={isDownloaded}
-                        onToggleLike={handleToggleLike}
-                        onTogglePin={handleTogglePin}
-                        onDownload={handleDownload}
-                        onPlayAll={handlePlayAll}
-                    />
+                    <View style={styles.flatTextBackground}>
+                        <CollectionMetadata 
+                            title={details.title} 
+                            subtitle={details.artist || details.owner} 
+                        />
+                        
+                        <CollectionActions 
+                            isLiked={isLiked}
+                            isPinned={isPinned}
+                            isDownloaded={isDownloaded}
+                            onToggleLike={handleToggleLike}
+                            onTogglePin={handleTogglePin}
+                            onDownload={handleDownload}
+                            onPlayAll={handlePlayAll}
+                        />
+                    </View>
 
                     <CollectionTrackList 
                         tracks={details.tracks} 

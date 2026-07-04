@@ -4,8 +4,8 @@ import { colors } from '../../../styles/theme';
 export const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 20,
-        paddingTop: 20, // Espacio entre la foto gigante y el texto
-        paddingBottom: 5,
+        paddingTop: 5, // Espacio entre la foto gigante y el texto
+        paddingBottom: 0,
     },
     title: {
         fontSize: 26, 
@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 18,
-        color: colors.accent, // El verde aqua de acento (#00ffcc)
+        color: colors.primary, // El verde aqua de acento (#00ffcc)
         fontWeight: '600',
         opacity: 0.9,
     }

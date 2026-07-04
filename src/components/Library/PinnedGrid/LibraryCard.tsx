@@ -19,14 +19,22 @@ export default function LibraryCard({ title, subtitle, imageUrl, onPress, showPi
         <TouchableOpacity 
             style={styles.cardContainer} 
             onPress={onPress}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
         >
-            <Image source={{ uri: imageUrl }} style={styles.backgroundImage} />
-            <View style={styles.overlay}>
-                {/* 🛡️ Solo se dibuja el pin si el padre lo autoriza */}
+            {/* 1. EL COVER ART (Imagen cuadrada perfecta con su borde) */}
+            <View style={styles.imageContainer}>
+                <Image source={{ uri: imageUrl }} style={styles.image} />
+                
+                {/* 🛡️ El pin ahora es una medalla (badge) flotante en la esquina */}
                 {showPin && (
-                    <Ionicons name="pin" size={16} color={colors.accent} style={styles.pinIcon} />
+                    <View style={styles.pinBadge}>
+                        <Ionicons name="pin" size={12} color={colors.background} />
+                    </View>
                 )}
+            </View>
+            
+            {/* 2. LA METADATA LIMPIA DEBAJO (Como Apple Music) */}
+            <View style={styles.infoContainer}>
                 <Text style={styles.title} numberOfLines={1}>{title}</Text>
                 <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
             </View>

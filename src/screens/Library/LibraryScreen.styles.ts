@@ -4,11 +4,11 @@ import { colors, frosted } from '../../styles/theme';
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: 'transparent',
     },
     centerContainer: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: 'transparent',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -149,5 +149,24 @@ export const styles = StyleSheet.create({
     },
     moreButton: {
         padding: 10,
-    }
+    },
+
+    collectionContainer: {
+        ...frosted,
+        padding: 20,
+        borderRadius: 24,
+        marginBottom: 20,
+    },
+    collectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: 'rgba(255, 255, 255, 0.9)',
+        marginBottom: 15, // Espacio estático, sin icono de flecha
+    },
+    collectionGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        overflow: 'hidden',
+    },
 });
