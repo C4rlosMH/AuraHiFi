@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
         ...frosted, // ⚡ Inyectamos las propiedades del cristal esmerilado
         width: 42,
         height: 40,
-        borderRadius: 15, // Forzamos un radio más cerrado para botones pequeños
+        borderRadius: 21, // Forzamos un radio más cerrado para botones pequeños
         justifyContent: 'center',
         alignItems: 'center',
     },

@@ -23,3 +23,15 @@ export const frosted = {
     borderLeftWidth: 1.2,
     borderLeftColor: 'rgba(255, 255, 255, 0.08)',
 };
+
+// Añade esto al final de tu theme.ts existente
+export const gradients = {
+    // Opción A: Aurora Boreal (Tonos oscuros de verde azulado y violeta místico)
+    aurora: ['#050B0A', '#0A0914', '#040F0E'] as const,
+    
+    // Opción B: Nebulosa (Típico de Apple Music: púrpuras profundos combinados con azul espacial)
+    nebulosa: ['#0D0614', '#060A1A', '#0B0512'] as const,
+
+    // Opción C: Índigo Oceánico (Frío, profundo y ultra limpio)
+    indigoOceano: ['#040B11', '#0A0A16', '#050D17'] as const,
+};

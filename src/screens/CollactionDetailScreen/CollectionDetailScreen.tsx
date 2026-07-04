@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // --- Servicios ---
 import { navidromeApi } from '../../services/navidromeApi';
 import { pinService, PinItem } from '../../services/PinService';
-// import { playerService } from '../../services/PlayerService'; // Lo usaremos para reproducir
+import { playerService } from '../../services/PlayerService'; // Lo usaremos para reproducir
+
+// --- Componentes ---
+import CollectionHeader from '../../components/CollectionDetail/Header/CollectionHeader';
+import CollectionCover from '../../components/CollectionDetail/Cover/CollectionCover';
+import CollectionMetadata from '../../components/CollectionDetail/Metadata/CollectionMetadata';
+import CollectionActions from '../../components/CollectionDetail/Actions/CollectionActions';
+import CollectionTrackList from '../../components/CollectionDetail/TrackList/CollectionTrackList';
 
 // --- Estilos ---
 import { styles } from './CollectionDetailScreen.styles';
@@ -16,14 +22,17 @@ export default function CollectionDetailScreen() {
     const route = useRoute();
     const navigation = useNavigation();
     
-    // Asumimos que al navegar le pasamos el ID y el TIPO (album o playlist)
+    // Obtenemos los parámetros de navegación
     const { id, type, title: initialTitle } = route.params as { id: string, type: 'album' | 'playlist', title: string };
 
+    // --- ESTADOS ---
     const [details, setDetails] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isPinned, setIsPinned] = useState(false);
-    const [isLiked, setIsLiked] = useState(false); // Estado para el corazón (Navidrome)
+    const [isLiked, setIsLiked] = useState(false);
+    const [isDownloaded, setIsDownloaded] = useState(false);
 
+    // --- EFECTO DE CARGA INICIAL ---
     useEffect(() => {
         loadData();
     }, [id]);
@@ -31,30 +40,29 @@ export default function CollectionDetailScreen() {
     const loadData = async () => {
         try {
             setIsLoading(true);
-            
-            // 1. Cargamos datos del NAS
+            // 1. Cargamos la info del NAS dependiendo de si es álbum o playlist
             const data = type === 'album' 
                 ? await navidromeApi.getAlbumDetails(id)
                 : await navidromeApi.getPlaylistDetails(id);
             
             setDetails(data);
 
-            // 2. Verificamos si ya está Pineado localmente
+            // 2. Verificamos si ya está guardado en el PinService local
             const pinnedStatus = await pinService.isPinned(id);
             setIsPinned(pinnedStatus);
             
-            // Nota: Aquí en el futuro verificarías si el álbum completo tiene 'Like' en Navidrome
-            // setIsLiked(data.starred); 
+            // Aquí a futuro agregaremos la validación de descargas (expo-file-system)
             
         } catch (error) {
             console.error("Error cargando detalles:", error);
-            Alert.alert("Error", "No se pudo cargar la colección.");
+            Alert.alert("Error de conexión", "No se pudo cargar la colección desde el NAS.");
             navigation.goBack();
         } finally {
             setIsLoading(false);
         }
     };
 
+    // --- FUNCIONES CONTROLADORAS ---
     const handleTogglePin = async () => {
         if (!details) return;
         
@@ -67,21 +75,60 @@ export default function CollectionDetailScreen() {
         };
 
         const result = await pinService.togglePin(pinData);
-        
         if (result.success) {
             setIsPinned(!isPinned);
         } else {
-            // ¡El usuario intentó pinear un 7mo disco!
             Alert.alert("Biblioteca Llena", result.message);
         }
     };
 
     const handleToggleLike = async () => {
-        // Esto envía la orden a Navidrome para guardarlo globalmente
-        const newState = await navidromeApi.toggleStar(id, isLiked);
-        setIsLiked(newState);
+        // Aún falta implementar el método toggleStar en NavidromeAPI, 
+        // pero dejamos la lógica lista.
+        try {
+            const newState = await navidromeApi.toggleStar(id, isLiked);
+            setIsLiked(newState);
+        } catch (error) {
+            console.log("Toggle Star falló", error);
+        }
     };
 
+    const handleDownload = () => {
+        // Simulador de descarga para la UI por ahora
+        console.log("Iniciando preparación de FLACs para descarga offline...");
+        setIsDownloaded(!isDownloaded);
+    };
+
+    const handlePlayTrack = (selectedTrack: any) => {
+        if (!details || !details.tracks || details.tracks.length === 0) return;
+
+        // Normalizador Crítico: Asegura que playerService entienda las URLs del NAS
+        const normalizedTracks = details.tracks.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            album: t.album || details.title,
+            duration: t.duration,
+            coverArtUrl: t.coverArtUrl || t.artwork || details.coverArtUrl,
+            streamUrl: t.streamUrl || t.url // Emparejamos el tipo de URL
+        }));
+
+        const normalizedSelected = normalizedTracks.find((t: any) => t.id === selectedTrack.id);
+        
+        if (normalizedSelected) {
+            playerService.playCollection(normalizedSelected, normalizedTracks);
+        }
+    };
+
+    const handlePlayAll = () => {
+        if (details && details.tracks && details.tracks.length > 0) {
+            handlePlayTrack(details.tracks[0]); // Reproduce desde la pista 1
+        }
+    };
+
+    // --- RENDERIZADO ---
+    
+    // Pantalla de Carga
     if (isLoading || !details) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -90,52 +137,40 @@ export default function CollectionDetailScreen() {
         );
     }
 
+    // Interfaz Principal Ensamblada
     return (
         <View style={styles.container}>
+            
+            {/* 1. Header con efecto Frosted (Flotante) */}
+            <CollectionHeader 
+                onBack={() => navigation.goBack()} 
+                onOptions={() => console.log("Opciones de colección abiertas")} 
+            />
+
+            {/* 2. Cuerpo Deslizable */}
             <ScrollView showsVerticalScrollIndicator={false}>
                 
-                {/* --- PORTADA GIGANTE Y GRADIENTE --- */}
-                <View style={styles.coverContainer}>
-                    <Image source={{ uri: details.coverArtUrl }} style={styles.coverImage} />
-                    <View style={styles.gradientOverlay}>
-                        <Text style={styles.title} numberOfLines={2}>{details.title}</Text>
-                        <Text style={styles.subtitle}>{details.artist || details.owner}</Text>
-                    </View>
-                </View>
+                <CollectionCover coverArtUrl={details.coverArtUrl} />
+                
+                <CollectionMetadata 
+                    title={details.title} 
+                    subtitle={details.artist || details.owner} 
+                />
+                
+                <CollectionActions 
+                    isLiked={isLiked}
+                    isPinned={isPinned}
+                    isDownloaded={isDownloaded}
+                    onToggleLike={handleToggleLike}
+                    onTogglePin={handleTogglePin}
+                    onDownload={handleDownload}
+                    onPlayAll={handlePlayAll}
+                />
 
-                {/* --- BARRA DE ACCIONES (FROSTED & MAIN) --- */}
-                <View style={styles.actionRow}>
-                    <View style={styles.leftActions}>
-                        {/* Botón de Like (Nube/Navidrome) */}
-                        <TouchableOpacity style={styles.iconButton} onPress={handleToggleLike}>
-                            <Ionicons name={isLiked ? "heart" : "heart-outline"} size={22} color={isLiked ? colors.accent : colors.primary} />
-                        </TouchableOpacity>
-
-                        {/* Botón de Pin (Local/Aura Hi-Fi) */}
-                        <TouchableOpacity style={styles.iconButton} onPress={handleTogglePin}>
-                            <Ionicons name={isPinned ? "pin" : "pin-outline"} size={22} color={isPinned ? colors.accent : colors.primary} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Botón Play */}
-                    <TouchableOpacity style={styles.playButton} onPress={() => console.log("Play All")}>
-                        <Ionicons name="play" size={26} color="#000" style={{ marginLeft: 3 }} />
-                    </TouchableOpacity>
-                </View>
-
-                {/* --- LISTA DE CANCIONES --- */}
-                <View style={styles.trackListContainer}>
-                    {details.tracks.map((track: any, index: number) => (
-                        <TouchableOpacity key={track.id} style={styles.trackRow} onPress={() => console.log("Play Track", track.title)}>
-                            <Text style={styles.trackNumber}>{index + 1}</Text>
-                            <View style={styles.trackInfo}>
-                                <Text style={styles.trackTitle} numberOfLines={1}>{track.title}</Text>
-                                <Text style={styles.trackArtist} numberOfLines={1}>{track.artist}</Text>
-                            </View>
-                            <Ionicons name="ellipsis-vertical" size={20} color={colors.textMuted} />
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                <CollectionTrackList 
+                    tracks={details.tracks} 
+                    onPlayTrack={handlePlayTrack} 
+                />
 
             </ScrollView>
         </View>
