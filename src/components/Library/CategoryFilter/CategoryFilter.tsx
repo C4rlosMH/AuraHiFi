@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from './CategoryFilter.styles';
 import { colors } from '../../../styles/theme';
 
 interface CategoryFilterProps {
+    activeCategory: string | null; // 🚀 Ahora recibe el estado desde el padre
     onSelectCategory: (category: string | null) => void;
 }
 
-export default function CategoryFilter({ onSelectCategory }: CategoryFilterProps) {
-    const [activeCategory, setActiveCategory] = useState<string | null>(null);
+export default function CategoryFilter({ activeCategory, onSelectCategory }: CategoryFilterProps) {
 
     const handlePress = (category: string) => {
-        // Si tocas la misma categoría que ya está activa, la desmarca (vuelve a la vista general)
+        // Si tocas la misma categoría que ya está activa, manda 'null' para apagarla
         const newCategory = activeCategory === category ? null : category;
-        setActiveCategory(newCategory);
         onSelectCategory(newCategory);
     };
 
@@ -29,6 +28,7 @@ export default function CategoryFilter({ onSelectCategory }: CategoryFilterProps
                 <TouchableOpacity 
                     style={[styles.chip, activeCategory === 'guardados' && styles.chipActive]} 
                     onPress={() => handlePress('guardados')}
+                    activeOpacity={0.7}
                 >
                     <Ionicons 
                         name="cloud-download-outline" 
@@ -47,6 +47,7 @@ export default function CategoryFilter({ onSelectCategory }: CategoryFilterProps
                         key={cat}
                         style={[styles.chip, activeCategory === cat && styles.chipActive]} 
                         onPress={() => handlePress(cat)}
+                        activeOpacity={0.7}
                     >
                         <Text style={[styles.chipText, activeCategory === cat && styles.chipTextActive]}>
                             {cat}

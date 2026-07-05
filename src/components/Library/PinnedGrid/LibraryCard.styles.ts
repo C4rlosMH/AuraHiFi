@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
         position: 'absolute',
         top: 6,
         right: 6,
-        //backgroundColor: colors.accent, // Círculo del color de acento
+        backgroundColor: colors.light, // Círculo del color de acento
         borderRadius: 12,
         padding: 4,
         elevation: 3,

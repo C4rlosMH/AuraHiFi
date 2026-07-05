@@ -63,6 +63,14 @@ export interface Playlist {
     owner?: string;
     coverArtUrl: string;
     trackCount?: number;
+    duration?: number;
+}
+
+export interface Artist {
+    id: string;
+    name: string;
+    albumCount?: number;
+    artistImageUrl?: string;
 }
 
 // 4. EL MOTOR EXPORTADO DE LA API
@@ -117,6 +125,86 @@ export const navidromeApi = {
         const data = await fetchFromNavidrome(url);
         const songs = data['subsonic-response']?.playlist?.entry || [];
         return navidromeApi.mapSongsToTrack(songs, 'getPlaylist');
+    },
+
+    getArtists: async (): Promise<Artist[]> => {
+        const url = buildUrl('getArtists');
+        const data = await fetchFromNavidrome(url);
+        const artistsList: Artist[] = [];
+
+        // Navidrome devuelve los artistas agrupados por letra (A, B, C...)
+        const indexArray = data['subsonic-response']?.artists?.index || [];
+        const indices = Array.isArray(indexArray) ? indexArray : [indexArray];
+
+        indices.forEach((indexNode: any) => {
+            if (indexNode.artist) {
+                const artistsInLetter = Array.isArray(indexNode.artist) ? indexNode.artist : [indexNode.artist];
+                artistsInLetter.forEach((a: any) => {
+                    artistsList.push({
+                        id: a.id,
+                        name: a.name,
+                        albumCount: a.albumCount,
+                        // Nota: Subsonic a veces no manda imagen directa aquí, lo manejaremos en la vista
+                        artistImageUrl: a.artistImageUrl 
+                    });
+                });
+            }
+        });
+        
+        return artistsList;
+    },
+
+    getArtistDetails: async (artistId: string, artistName: string) => {
+        // 1. Datos básicos y álbumes
+        const artistUrl = buildUrl('getArtist', { id: artistId });
+        // 2. Biografía e imagen en alta resolución (vía Last.fm / Navidrome)
+        const infoUrl = buildUrl('getArtistInfo2', { id: artistId });
+        
+        // 3. Las 5 canciones más populares del artista
+        const topSongsUrl = buildUrl('getTopSongs', { artist: artistName, count: 5 });
+
+        // Disparamos las 3 peticiones al mismo tiempo para no hacer esperar al usuario
+        const [artistRes, infoRes, topSongsRes] = await Promise.all([
+            fetchFromNavidrome(artistUrl).catch(() => null),
+            fetchFromNavidrome(infoUrl).catch(() => null),
+            fetchFromNavidrome(topSongsUrl).catch(() => null),
+        ]);
+        
+        const artist = artistRes?.['subsonic-response']?.artist;
+        const info = infoRes?.['subsonic-response']?.artistInfo2;
+        const topSongs = topSongsRes?.['subsonic-response']?.topSongs?.song || [];
+
+        if (!artist) throw new Error("Artista no encontrado");
+
+        return {
+            id: artist.id,
+            name: artist.name,
+            albumCount: artist.albumCount,
+            // Preferimos la imagen grande de la biografía si existe
+            artistImageUrl: info?.largeImageUrl || artist.artistImageUrl || undefined,
+            // Biografía (le quitamos tags HTML raros si Navidrome los manda)
+            biography: info?.biography ? info.biography.replace(/<[^>]*>?/gm, '') : 'Biografía no disponible en el servidor.',
+            
+            // Mapeamos el Top 5 de canciones
+            topTracks: topSongs.map((song: any) => ({
+                id: song.id,
+                title: song.title,
+                artist: song.artist,
+                album: song.album,
+                duration: song.duration,
+                coverArtUrl: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+                streamUrl: buildUrl('stream', { id: song.id })
+            })),
+
+            // Mapeamos los álbumes
+            albums: (artist.album || []).map((album: any) => ({
+                id: album.id,
+                title: album.name || album.title,
+                artist: artist.name,
+                year: album.year,
+                coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+            }))
+        };
     },
 
     getSyncedLyricsFromLRCLIB: async (artist: string, title: string): Promise<string | null> => {

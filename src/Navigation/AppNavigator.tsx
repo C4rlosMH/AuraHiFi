@@ -9,6 +9,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import HomeScreen from '../screens/Home/HomeScreen';
 import LibraryScreen from '../screens/Library/LibraryScreen';
 import CollectionDetailScreen from '../screens/CollactionDetailScreen/CollectionDetailScreen'; 
+import ArtistDetailScreen from '../screens/ArtistDetail/ArtistDetailScreen';
 
 // --- Estilos ---
 import { styles } from './AppNavigator.styles';
@@ -35,6 +36,7 @@ function LibraryStackNavigator() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="LibraryMain" component={LibraryScreen} />
             <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
+            <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} />
         </Stack.Navigator>
     );
 }

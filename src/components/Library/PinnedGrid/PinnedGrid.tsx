@@ -24,7 +24,7 @@ export default function PinnedGrid({ title = "Pins", data, onItemPress, isPinned
                         key={item.id}
                         id={item.id}
                         title={item.title}
-                        subtitle={item.artist || 'Playlist'} 
+                        subtitle={item.artist} 
                         imageUrl={item.coverArtUrl}
                         onPress={() => onItemPress(item.id, item.title)}
                         showPin={isPinnedSection} // 🚀 Pasa el comportamiento a la tarjeta

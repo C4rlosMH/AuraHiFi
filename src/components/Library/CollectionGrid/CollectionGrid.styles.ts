@@ -3,7 +3,8 @@ import { colors } from '../../../styles/theme';
 
 export const styles = StyleSheet.create({
     container: {
-        marginBottom: 30,
+        marginBottom: 0,
+        //paddingHorizontal: 20,
     },
     sectionTitle: {
         fontSize: 22,
@@ -15,5 +16,8 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 10, // Mismo espaciado exacto que PinnedGrid
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+        width: 'auto',
     }
 });

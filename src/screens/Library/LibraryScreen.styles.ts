@@ -169,4 +169,24 @@ export const styles = StyleSheet.create({
         gap: 10,
         overflow: 'hidden',
     },
+    placeholderContainer: {
+        flex: 1,
+        paddingVertical: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 30,
+    },
+    placeholderText: {
+        color: colors.textMuted,
+        fontSize: 15,
+        fontWeight: '500',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    placeholderHighlight: {
+        color: colors.accent,
+        fontWeight: '700',
+        fontSize: 16,
+        marginBottom: 8,
+    }
 });
