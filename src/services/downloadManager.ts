@@ -3,6 +3,8 @@ import { Track } from './navidromeApi';
 
 const AURA_AUDIO_DIR = `${(FileSystem as any).documentDirectory}aura_music/`;
 
+
+
 export const downloadManager = {
     async initializeDirectory() {
         try {
@@ -81,5 +83,26 @@ export const downloadManager = {
             }
         }
         console.log("Descarga del lote completada con exito.");
+    },
+    
+    async listDownloadedFiles(): Promise<void> {
+        try {
+            await this.initializeDirectory(); // Aseguramos que el folder exista
+            const files = await FileSystem.readDirectoryAsync(AURA_AUDIO_DIR);
+            
+            console.log(`\n=== 📂 AUDITORÍA DE AURA OFFLINE ===`);
+            console.log(`Total de pistas descargadas: ${files.length}`);
+            
+            for (const file of files) {
+                const fileInfo = await FileSystem.getInfoAsync(`${AURA_AUDIO_DIR}${file}`);
+                // Convertimos los bytes a Megabytes para que sea legible
+                const sizeMB = fileInfo.exists ? (fileInfo.size / (1024 * 1024)).toFixed(2) : 0;
+                console.log(`🎵 ${file} - ${sizeMB} MB`);
+            }
+            console.log(`====================================\n`);
+            
+        } catch (error) {
+            console.error("Error al auditar el directorio:", error);
+        }
     }
 };

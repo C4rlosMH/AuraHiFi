@@ -33,5 +33,11 @@ export const styles = StyleSheet.create({
     },
     playIconShift: {
         marginLeft: 3, // Truco visual para que el triángulo del Play se vea perfectamente centrado
-    }
+    },
+    progressText: {
+        color: colors.light,
+        fontSize: 14,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
 });

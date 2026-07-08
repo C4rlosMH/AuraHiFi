@@ -10,7 +10,7 @@ interface CollectionHeaderProps {
 
 export default function CollectionHeader({ onBack, onOptions }: CollectionHeaderProps) {
     return (
-        <View style={styles.headerContainer}>
+        <View style={styles.headerContainer } pointerEvents="box-none">
             {/* Botón de Regreso con capa Aura Frosted */}
             <TouchableOpacity style={styles.iconButton} onPress={onBack}>
                 <Ionicons name="chevron-back" size={24} color="#ffffff" style={styles.iconBackShift} />

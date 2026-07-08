@@ -1,3 +1,5 @@
+// src/components/Library/PinnedGrid/LibraryCard.styles.ts
+
 import { StyleSheet, Dimensions } from 'react-native';
 import { colors } from '../../../styles/theme';
 
@@ -8,36 +10,46 @@ const cardWidth = Math.floor((width - 60) / 3);
 export const styles = StyleSheet.create({
     cardContainer: {
         width: cardWidth,
-        marginBottom: 16, // Espacio para separar visualmente las filas hacia abajo
+        marginBottom: 16,
     },
     imageContainer: {
         width: cardWidth,
-        height: cardWidth, // Forzamos a que solo la imagen sea el cuadrado perfecto
-        borderRadius: 12,
+        height: cardWidth,
         backgroundColor: colors.surface,
-        marginBottom: 8, // Separación limpia entre la imagen y el texto
-        
-        // Sutil brillo exterior para dar aspecto premium a la carátula
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 8,
         borderWidth: 1,
         borderColor: colors.glassDark,
-        
-        // Sombra para despegar el disco del fondo oscuro de la app
-        elevation: 5,
+        elevation: 4,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3,
+        overflow: 'hidden', 
+    },
+    squareBorder: {
+        borderRadius: 12, 
+    },
+    circleBorder: {
+        borderRadius: cardWidth / 2, 
     },
     image: {
         width: '100%',
         height: '100%',
-        borderRadius: 11, // Ligeramente menor para encajar perfecto en el borde
+    },
+    folderIconContainer: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     pinBadge: {
         position: 'absolute',
         top: 6,
         right: 6,
-        backgroundColor: colors.light, // Círculo del color de acento
+        backgroundColor: colors.light, 
         borderRadius: 12,
         padding: 4,
         elevation: 3,
@@ -47,17 +59,54 @@ export const styles = StyleSheet.create({
         shadowRadius: 2,
     },
     infoContainer: {
-        alignItems: 'flex-start',
-        paddingHorizontal: 2, // Para que el texto alinee sutilmente con el borde de la carátula
+        width: '100%',
+        paddingHorizontal: 2,
     },
     title: {
+        fontSize: 14,
+        fontWeight: '600',
         color: colors.primary,
-        fontSize: 12,
-        fontWeight: '700',
         marginBottom: 2,
     },
     subtitle: {
+        fontSize: 12,
         color: colors.textMuted,
-        fontSize: 11,
+    },
+    // 🚀 ESTILOS AISLADOS DE SELECCIÓN MÚLTIPLE
+    overlayBase: {
+        ...StyleSheet.absoluteFillObject,
+        padding: 8,
+        alignItems: 'flex-end',
+    },
+    overlayUnselected: {
+        backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    overlaySelected: {
+        backgroundColor: 'rgba(0, 255, 204, 0.15)',
+    },
+    overlayDisabled: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.65)',
+    },
+    checkboxCircle: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    checkboxUnchecked: {
+        borderColor: 'rgba(255,255,255,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    checkboxChecked: {
+        borderColor: colors.accent,
+        backgroundColor: colors.accent,
+    },
+    checkmark: {
+        color: '#0a0a0c',
+        fontWeight: 'bold',
+        fontSize: 12,
     }
 });

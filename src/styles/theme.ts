@@ -10,6 +10,7 @@ export const colors = {
     textMuted: 'rgba(255, 255, 255, 0.6)',
     progressBg: 'rgba(255, 255, 255, 0.15)',
     glassBadge: 'rgba(0, 0, 0, 0.6)',
+    reemplazo: '#1b1b1cd9'
 };
 
 export const frosted = {

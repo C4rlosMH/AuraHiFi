@@ -35,5 +35,17 @@ export const styles = StyleSheet.create({
     optionsButton: {
         padding: 5,
         marginLeft: 10,
+    },
+    addAction: {
+        backgroundColor: colors.light, // Usamos tu color insignia (Cian)
+        justifyContent: 'center',
+        alignItems: 'flex-start', // Alineado a la izquierda porque empujamos hacia la derecha
+        paddingLeft: 25,
+        marginBottom: 8, // Para igualar el margen de la pista
+        borderRadius: 8,
+        flex: 1,
+    },
+    addActionIcon: {
+        color: colors.surface, // Negro o el color de fondo para que contraste con el Cian
     }
 });

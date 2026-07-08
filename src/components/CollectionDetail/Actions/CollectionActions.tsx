@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from './CollectionActions.styles';
 import { colors } from '../../../styles/theme';
@@ -8,6 +8,7 @@ interface CollectionActionsProps {
     isLiked: boolean;
     isPinned: boolean;
     isDownloaded: boolean;
+    downloadProgress?: string | null;
     onToggleLike: () => void;
     onTogglePin: () => void;
     onDownload: () => void;
@@ -18,6 +19,7 @@ export default function CollectionActions({
     isLiked,
     isPinned,
     isDownloaded,
+    downloadProgress,
     onToggleLike,
     onTogglePin,
     onDownload,
@@ -45,12 +47,16 @@ export default function CollectionActions({
                 </TouchableOpacity>
 
                 {/* DOWNLOAD */}
-                <TouchableOpacity style={styles.iconButton} onPress={onDownload}>
-                    <Ionicons 
-                        name={isDownloaded ? "arrow-down-circle" : "arrow-down-circle-outline"} 
-                        size={26} 
-                        color={isDownloaded ? colors.light : colors.primary} 
-                    />
+                <TouchableOpacity style={styles.iconButton} onPress={onDownload} disabled={downloadProgress !== null}>
+                    {downloadProgress ? (
+                        <Text style={styles.progressText}>{downloadProgress}</Text>
+                    ) : (
+                        <Ionicons 
+                            name={isDownloaded ? "arrow-down-circle" : "arrow-down-circle-outline"} 
+                            size={26} 
+                            color={isDownloaded ? colors.light : colors.primary} 
+                        />
+                    )}
                 </TouchableOpacity>
             </View>
 

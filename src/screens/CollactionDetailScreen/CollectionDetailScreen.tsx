@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -6,6 +6,8 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { navidromeApi } from '../../services/navidromeApi';
 import { pinService, PinItem } from '../../services/PinService';
 import { playerService } from '../../services/PlayerService'; // Lo usaremos para reproducir
+import { downloadManager } from '../../services/downloadManager'
+import { localLibraryService } from '../../services/LocalLibraryService';
 
 // --- Componentes ---
 import AuraBackground from '../../components/AuraBackground/AuraBackground';
@@ -14,6 +16,7 @@ import CollectionCover from '../../components/CollectionDetail/Cover/CollectionC
 import CollectionMetadata from '../../components/CollectionDetail/Metadata/CollectionMetadata';
 import CollectionActions from '../../components/CollectionDetail/Actions/CollectionActions';
 import CollectionTrackList from '../../components/CollectionDetail/TrackList/CollectionTrackList';
+import LocalSearchBar from '../../components/Common/LocalSearchBar/LocalSearchBar';
 
 // --- Estilos ---
 import { styles } from './CollectionDetailScreen.styles';
@@ -24,7 +27,8 @@ export default function CollectionDetailScreen() {
     const navigation = useNavigation();
     
     // Obtenemos los parámetros de navegación
-    const { id, type, title: initialTitle } = route.params as { id: string, type: 'album' | 'playlist', title: string };
+
+    const { id, type, title: initialTitle } = route.params as { id: string, type: 'album' | 'playlist' | 'local_folder', title: string };
 
     // --- ESTADOS ---
     const [details, setDetails] = useState<any>(null);
@@ -32,6 +36,20 @@ export default function CollectionDetailScreen() {
     const [isPinned, setIsPinned] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [isDownloaded, setIsDownloaded] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [downloadProgress, setDownloadProgress] = useState<string | null>(null);
+
+    const scrollViewRef = useRef<ScrollView>(null);
+
+    useEffect(() => {
+        if (!isLoading && type === 'playlist' && scrollViewRef.current) {
+            // Le damos 150ms a Android para asegurar que la vista ya existe antes de moverla
+            setTimeout(() => {
+                // 90 es la altura de la barra + el margen del Notch de tu Poco X7 Pro
+                scrollViewRef.current?.scrollTo({ y: 90, animated: false });
+            }, 150);
+        }
+    }, [isLoading, type]);
 
     // --- EFECTO DE CARGA INICIAL ---
     useEffect(() => {
@@ -41,22 +59,41 @@ export default function CollectionDetailScreen() {
     const loadData = async () => {
         try {
             setIsLoading(true);
-            // 1. Cargamos la info del NAS dependiendo de si es álbum o playlist
+
+            // 1. INTERCEPTOR LOCAL: Si es una carpeta offline, leemos de AsyncStorage
+            if (type === 'local_folder') {
+                const tracks = id === 'fav_folder'
+                    ? await localLibraryService.getFavoritedTracks()
+                    : await localLibraryService.getDownloadedTracks();
+
+                setDetails({
+                    id: id,
+                    title: id === 'fav_folder' ? 'Tus Favoritos' : 'Descargas Locales',
+                    artist: 'Aura Hi-Fi',
+                    coverArtUrl: tracks.length > 0 ? tracks[0].coverArtUrl : '', // Usamos la primera pista como portada
+                    tracks: tracks
+                });
+                
+                setIsPinned(false);
+                setIsDownloaded(true);
+                setIsLoading(false);
+                return; // Cortamos la ejecucion para no consultar al NAS
+            }
+
+            // 2. FLUJO NORMAL: Cargamos la info del NAS dependiendo de si es album o playlist
             const data = type === 'album' 
                 ? await navidromeApi.getAlbumDetails(id)
                 : await navidromeApi.getPlaylistDetails(id);
             
             setDetails(data);
 
-            // 2. Verificamos si ya está guardado en el PinService local
+            // Verificamos si ya esta guardado en el PinService local
             const pinnedStatus = await pinService.isPinned(id);
             setIsPinned(pinnedStatus);
             
-            // Aquí a futuro agregaremos la validación de descargas (expo-file-system)
-            
         } catch (error) {
             console.error("Error cargando detalles:", error);
-            Alert.alert("Error de conexión", "No se pudo cargar la colección desde el NAS.");
+            Alert.alert("Error de conexion", "No se pudo cargar la coleccion desde el NAS.");
             navigation.goBack();
         } finally {
             setIsLoading(false);
@@ -66,13 +103,20 @@ export default function CollectionDetailScreen() {
     // --- FUNCIONES CONTROLADORAS ---
     const handleTogglePin = async () => {
         if (!details) return;
+
+        // Bloqueamos el pin para carpetas locales (ya son permanentes en la biblioteca)
+        if (type === 'local_folder') {
+            Alert.alert("Carpetas Locales", "Estas carpetas ya forman parte permanente de tu biblioteca.");
+            return;
+        }
         
         const pinData: PinItem = {
             id: details.id,
             title: details.title,
             subtitle: details.artist || details.owner || 'Aura Hi-Fi',
             coverArtUrl: details.coverArtUrl,
-            type: type
+            // Hacemos un "Type Assertion" para calmar a TypeScript
+            type: type as 'album' | 'playlist' 
         };
 
         const result = await pinService.togglePin(pinData);
@@ -94,10 +138,50 @@ export default function CollectionDetailScreen() {
         }
     };
 
-    const handleDownload = () => {
-        // Simulador de descarga para la UI por ahora
-        console.log("Iniciando preparación de FLACs para descarga offline...");
-        setIsDownloaded(!isDownloaded);
+    const handleDownload = async () => {
+        if (!details || !details.tracks || details.tracks.length === 0) return;
+
+        try {
+            setIsDownloaded(true); 
+            setDownloadProgress("0%");
+
+            // Normalizamos las pistas
+            const tracksToProcess = details.tracks.map((t: any) => ({
+                id: t.id,
+                title: t.title,
+                artist: t.artist || details.artist || "Aura Hi-Fi",
+                album: t.album || details.title,
+                duration: t.duration,
+                coverArtUrl: t.coverArtUrl || details.coverArtUrl,
+                streamUrl: t.streamUrl || t.url
+            }));
+
+            // 1. Descarga física (Sandbox)
+            await downloadManager.downloadCollection(tracksToProcess, (downloaded, total) => {
+                const percentage = Math.round((downloaded / total) * 100);
+                setDownloadProgress(`${percentage}%`);
+            });
+
+            // 🚀 2. NUEVO: Registro en la Base de Datos Local
+            console.log("Registrando pistas en la biblioteca offline...");
+            for (const track of tracksToProcess) {
+                const filename = downloadManager.getSafeFilename(track.title, track.artist);
+                const localUri = await downloadManager.getLocalUriIfExists(filename);
+                
+                if (localUri) {
+                    await localLibraryService.registerDownload(track, localUri);
+                }
+            }
+
+            setDownloadProgress(null);
+            Alert.alert("Descarga Completada", "La colección ha sido guardada y catalogada en tu dispositivo.");
+
+        } catch (error) {
+            console.error("Error en la descarga:", error);
+            setIsDownloaded(false);
+            setDownloadProgress(null);
+            Alert.alert("Error", "Hubo un problema al descargar la música.");
+        }
     };
 
     const handlePlayTrack = (selectedTrack: any) => {
@@ -127,6 +211,17 @@ export default function CollectionDetailScreen() {
         }
     };
 
+    const filteredTracks = details?.tracks?.filter((track: any) => {
+        const searchLower = searchQuery.toLowerCase();
+        
+        // 🛡️ ESCUDO: Convertimos forzosamente a String para evitar que 
+        // Navidrome o TypeScript nos rompan el código con booleanos (false) o nulos
+        const safeTitle = String(track.title || '').toLowerCase();
+        const safeArtist = String(track.artist || '').toLowerCase();
+
+        return safeTitle.includes(searchLower) || safeArtist.includes(searchLower);
+    }) || [];
+
     // --- RENDERIZADO ---
     
     // Pantalla de Carga
@@ -153,9 +248,20 @@ export default function CollectionDetailScreen() {
 
                 {/* 2. Cuerpo Deslizable */}
                 <ScrollView 
+                    ref={scrollViewRef} // 🚀 Conectamos el control manual
                     showsVerticalScrollIndicator={false}
                     style={{ backgroundColor: 'transparent' }} 
+                    // Eliminamos el contentOffset que Android ignora
                 >
+                    {type === 'playlist' && (
+                        <View style={styles.searchBarContainer}> 
+                            <LocalSearchBar 
+                                searchQuery={searchQuery}
+                                onSearchChange={setSearchQuery}
+                                placeholder="Buscar en la playlist..."
+                            />
+                        </View>
+                    )}
                     
                     <CollectionCover coverArtUrl={details.coverArtUrl} />
                     
@@ -169,6 +275,7 @@ export default function CollectionDetailScreen() {
                             isLiked={isLiked}
                             isPinned={isPinned}
                             isDownloaded={isDownloaded}
+                            downloadProgress={downloadProgress}
                             onToggleLike={handleToggleLike}
                             onTogglePin={handleTogglePin}
                             onDownload={handleDownload}
@@ -177,7 +284,7 @@ export default function CollectionDetailScreen() {
                     </View>
 
                     <CollectionTrackList 
-                        tracks={details.tracks} 
+                        tracks={filteredTracks} 
                         onPlayTrack={handlePlayTrack} 
                     />
 

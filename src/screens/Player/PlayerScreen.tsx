@@ -4,6 +4,8 @@ import TrackPlayer, { RepeatMode, useActiveTrack } from 'react-native-track-play
 
 // --- Servicios ---
 import { playerService } from '../../services/PlayerService';
+import { localLibraryService } from '../../services/LocalLibraryService';
+
 
 // --- Componentes Modulares ---
 import PlayerBackground from '../../components/Player/PlayerBackground/PlayerBackground';
@@ -31,12 +33,13 @@ interface PlayerScreenProps {
 export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerScreenProps) {
     // ESTADOS Y LÓGICA
     const [trackInfo, setTrackInfo] = useState<{ id: string; title: string; artist: string; artwork: string } | null>(null);
-    const [isFavorite, setIsFavorite] = useState(false);
+    //const [isFavorite, setIsFavorite] = useState(false);
     const [shuffleOn, setShuffleOn] = useState(false);
     const [repeatState, setRepeatState] = useState<RepeatMode>(RepeatMode.Off);
     const [showQueue, setShowQueue] = useState(false);
     const [showLyrics, setShowLyrics] = useState(false);
     const [currentQueue, setCurrentQueue] = useState<any[]>([]);
+    const [isLiked, setIsLiked] = useState(false);
 
     const activeTrack = useActiveTrack();
 
@@ -107,9 +110,14 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                 id: activeTrack.id || '',
                 title: activeTrack.title || 'Desconocido',
                 artist: activeTrack.artist || 'Artista Desconocido',
-                artwork: activeTrack.artwork || ''
+                artwork: activeTrack.artwork || '',
+                //streamUrl: activeTrack.url || '' // 🚀 Rescatamos la URL original
             });
-            setIsFavorite(false);
+            
+            // 🚀 NUEVO: Consultamos nuestra base de datos local
+            if (activeTrack.id) {
+                localLibraryService.isTrackFavorited(activeTrack.id).then(setIsLiked);
+            }
         } else {
             setTrackInfo(null);
         }
@@ -129,16 +137,72 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
         syncPlaybackParams();
     }, [isVisible]);
 
-    // MANEJADORES DE EVENTOS
-    const handleToggleFavorite = async () => {
-        if (!trackInfo?.id) return;
-        const nextState = !isFavorite;
-        setIsFavorite(nextState); 
+    const fetchCurrentQueue = async () => {
         try {
-            await playerService.toggleFavoriteServer(trackInfo.id);
-        } catch (err) {
-            setIsFavorite(!nextState); 
-            console.error('Error toggling favorite:', err);
+            // 🛡️ EL TRUCO DE INGENIERÍA: Le damos 150ms al puente de Android/iOS 
+            // para que consolide la memoria nativa antes de pedirle los datos.
+            await new Promise(resolve => setTimeout(resolve, 150));
+
+            const nativeQueue = await TrackPlayer.getQueue();
+            const currentTrackIndex = await TrackPlayer.getActiveTrackIndex(); 
+            
+            if (currentTrackIndex !== undefined && currentTrackIndex !== null) {
+                const formattedQueue = nativeQueue.slice(currentTrackIndex).map((track, index) => ({
+                    ...track,
+                    nativeIndex: currentTrackIndex + index 
+                }));
+                
+                // ⚠️ Asegúrate de que tu estado se llame setQueue o setQueueList
+                setCurrentQueue(formattedQueue); 
+            }
+        } catch (error) {
+            console.log("Error leyendo la cola:", error);
+        }
+    };
+
+    // 🚀 NUEVA ANTENA: Escucha cambios manuales en la Queue (Add / Remove / Shuffle)
+    useEffect(() => {
+        // 1. Escuchamos las inyecciones y eliminaciones manuales de la UI
+        const unsubscribe = playerService.onQueueChange(() => {
+            fetchCurrentQueue();
+        });
+
+        // 2. Cargamos la cola visualmente la primera vez que se abre la app
+        fetchCurrentQueue();
+
+        return () => unsubscribe();
+    }, []);
+    // MANEJADORES DE EVENTOS
+    const handleToggleLike = async () => {
+        // 🚀 Validamos usando directamente el hook nativo
+        if (!activeTrack || !activeTrack.id) return;
+
+        // Optimistic UI: Cambiamos el color de inmediato para mantener los 60 FPS
+        const previousState = isLiked;
+        setIsLiked(!isLiked); 
+
+        try {
+            // Construimos el mapeo extrayendo los datos de la pista activa
+            const trackForLocal = {
+                id: activeTrack.id,
+                title: activeTrack.title || 'Desconocido',
+                artist: activeTrack.artist || 'Artista Desconocido',
+                album: activeTrack.album || '',
+                duration: activeTrack.duration || 0,
+                coverArtUrl: activeTrack.artwork || '',
+                // Nos aseguramos de extraer el string de la URL nativa de forma segura
+                streamUrl: typeof activeTrack.url === 'string' ? activeTrack.url : ''
+            };
+
+            // 1. Magia Local: Se cataloga y se inicia la descarga en segundo plano si corresponde
+            await localLibraryService.handleTrackLike(trackForLocal as any);
+            
+            // 2. Sincronización NAS: Le avisamos a tu servidor Navidrome
+            await playerService.toggleFavoriteServer(activeTrack.id);
+            
+        } catch (error) {
+            console.error("Error al gestionar el Like:", error);
+            setIsLiked(previousState); // Revertimos el icono si el almacenamiento falla
         }
     };
 
@@ -222,8 +286,8 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                             <TrackMetadata 
                                 title={trackInfo?.title || 'Ninguna pista activa'} 
                                 artist={trackInfo?.artist || 'Selecciona música'} 
-                                isFavorite={isFavorite}
-                                onToggleFavorite={handleToggleFavorite}
+                                isFavorite={isLiked}
+                                onToggleFavorite={handleToggleLike}
                             />
                         )}
                         

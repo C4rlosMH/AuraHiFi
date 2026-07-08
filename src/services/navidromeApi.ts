@@ -154,53 +154,94 @@ export const navidromeApi = {
         return artistsList;
     },
 
-    getArtistDetails: async (artistId: string, artistName: string) => {
-        // 1. Datos básicos y álbumes
+    getArtistDetails: async (artistId: string, artistName?: string) => {
         const artistUrl = buildUrl('getArtist', { id: artistId });
-        // 2. Biografía e imagen en alta resolución (vía Last.fm / Navidrome)
         const infoUrl = buildUrl('getArtistInfo2', { id: artistId });
-        
-        // 3. Las 5 canciones más populares del artista
-        const topSongsUrl = buildUrl('getTopSongs', { artist: artistName, count: 5 });
 
-        // Disparamos las 3 peticiones al mismo tiempo para no hacer esperar al usuario
-        const [artistRes, infoRes, topSongsRes] = await Promise.all([
+        // Hacemos las peticiones iniciales en paralelo
+        const [artistRes, infoRes] = await Promise.all([
             fetchFromNavidrome(artistUrl).catch(() => null),
             fetchFromNavidrome(infoUrl).catch(() => null),
-            fetchFromNavidrome(topSongsUrl).catch(() => null),
         ]);
         
-        const artist = artistRes?.['subsonic-response']?.artist;
-        const info = infoRes?.['subsonic-response']?.artistInfo2;
-        const topSongs = topSongsRes?.['subsonic-response']?.topSongs?.song || [];
+        let artist = artistRes?.['subsonic-response']?.artist;
+        let albums = artist?.album || [];
+        let info = infoRes?.['subsonic-response']?.artistInfo2;
 
-        if (!artist) throw new Error("Artista no encontrado");
+        // 🚀 EL SECRETO: Si la canción del Modal no nos mandó el nombre, lo extraemos a la fuerza de la biografía o de la base
+        const resolvedName = artistName || artist?.name || info?.name || info?.artist;
+
+        // 🛡️ PLAN B: Es un ID de Carpeta de Archivos
+        if (!artist) {
+            console.log("⚠️ getArtist falló. Intentando extraer por directorio...");
+            const directoryUrl = buildUrl('getMusicDirectory', { id: artistId });
+            const dirRes = await fetchFromNavidrome(directoryUrl).catch(() => null);
+            
+            const directory = dirRes?.['subsonic-response']?.directory;
+            if (directory) {
+                artist = {
+                    id: directory.id,
+                    name: directory.name || resolvedName,
+                    albumCount: directory.child?.length || 0,
+                    artistImageUrl: undefined
+                };
+                albums = directory.child || []; 
+            }
+        }
+
+        // 🚀 PLAN C: "GHOST ID" (Búsqueda y Rescate)
+        // Ahora usamos "resolvedName", por lo que NUNCA fallará aunque el Modal venga vacío
+        if (!artist && resolvedName) {
+            console.log(`📡 ID Fantasma detectado. Rescatando maestro por nombre: ${resolvedName}`);
+            const searchUrl = buildUrl('search3', { query: resolvedName, artistCount: 1 });
+            const searchRes = await fetchFromNavidrome(searchUrl).catch(() => null);
+            
+            const foundArtist = searchRes?.['subsonic-response']?.searchResult3?.artist?.[0];
+            
+            if (foundArtist) {
+                console.log(`✅ Artista Maestro encontrado: ${foundArtist.name}`);
+                const trueArtistUrl = buildUrl('getArtist', { id: foundArtist.id });
+                const trueArtistRes = await fetchFromNavidrome(trueArtistUrl).catch(() => null);
+                
+                artist = trueArtistRes?.['subsonic-response']?.artist || foundArtist;
+                albums = artist?.album || [];
+                
+                const trueInfoUrl = buildUrl('getArtistInfo2', { id: foundArtist.id });
+                const trueInfoRes = await fetchFromNavidrome(trueInfoUrl).catch(() => null);
+                info = trueInfoRes?.['subsonic-response']?.artistInfo2 || info;
+            }
+        }
+
+        if (!artist) throw new Error("Artista no encontrado en la base de datos.");
+
+        // Ahora sí, con el artista asegurado, pedimos las 5 canciones más populares
+        const topSongsUrl = buildUrl('getTopSongs', { artist: artist.name || resolvedName, count: 5 });
+        const topSongsRes = await fetchFromNavidrome(topSongsUrl).catch(() => null);
+        const topSongs = topSongsRes?.['subsonic-response']?.topSongs?.song || [];
 
         return {
             id: artist.id,
-            name: artist.name,
+            name: artist.name || resolvedName,
             albumCount: artist.albumCount,
-            // Preferimos la imagen grande de la biografía si existe
             artistImageUrl: info?.largeImageUrl || artist.artistImageUrl || undefined,
-            // Biografía (le quitamos tags HTML raros si Navidrome los manda)
             biography: info?.biography ? info.biography.replace(/<[^>]*>?/gm, '') : 'Biografía no disponible en el servidor.',
             
-            // Mapeamos el Top 5 de canciones
             topTracks: topSongs.map((song: any) => ({
                 id: song.id,
                 title: song.title,
                 artist: song.artist,
+                artistId: song.artistId,  // 🚀 Asegurado
                 album: song.album,
+                albumId: song.albumId,    // 🚀 Asegurado
                 duration: song.duration,
                 coverArtUrl: buildUrl('getCoverArt', { id: song.id, size: 300 }),
                 streamUrl: buildUrl('stream', { id: song.id })
             })),
 
-            // Mapeamos los álbumes
-            albums: (artist.album || []).map((album: any) => ({
+            albums: albums.map((album: any) => ({
                 id: album.id,
                 title: album.name || album.title,
-                artist: artist.name,
+                artist: artist.name || resolvedName,
                 year: album.year,
                 coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
             }))
@@ -343,5 +384,22 @@ export const navidromeApi = {
         const url = buildUrl(endpoint, { id });
         await fetchFromNavidrome(url);
         return !isStarred; 
-    }
+    },
+
+    getRandomSongs: async (count: number = 10) => {
+        const url = buildUrl('getRandomSongs', { size: count });
+        const response = await fetchFromNavidrome(url).catch(() => null);
+        
+        const songs = response?.['subsonic-response']?.randomSongs?.song || [];
+        
+        return songs.map((song: any) => ({
+            id: song.id,
+            title: song.title,
+            artist: song.artist,
+            album: song.album,
+            duration: song.duration,
+            coverArtUrl: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+            streamUrl: buildUrl('stream', { id: song.id })
+        }));
+    },
 };
