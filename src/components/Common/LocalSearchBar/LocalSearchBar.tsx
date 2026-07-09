@@ -9,31 +9,31 @@ interface LocalSearchBarProps {
     searchQuery: string;
     onSearchChange: (text: string) => void;
     placeholder?: string;
+    variant?: 'default' | 'header'
 }
 
 export default function LocalSearchBar({ 
     searchQuery, 
     onSearchChange, 
-    placeholder = "Buscar en la lista..." 
+    placeholder = "Buscar en la lista...",
+    variant = 'default'
 }: LocalSearchBarProps) {
     return (
-        <View style={styles.container}>
-            {/* Ícono de lupa */}
+        <View style={[styles.container, variant === 'header' && styles.headerVariant]}>
+            
             <Ionicons name="search" size={20} style={styles.searchIcon} />
             
-            {/* Campo de texto responsivo */}
             <TextInput
-                style={styles.input}
+                style={[styles.input, variant === 'header' && styles.headerInput]}
                 value={searchQuery}
                 onChangeText={onSearchChange}
                 placeholder={placeholder}
                 placeholderTextColor={colors.textMuted}
                 autoCorrect={false}
                 autoCapitalize="none"
-                cursorColor={colors.accent} // 🚀 El cursor de escritura usará tu color cian
+                cursorColor={colors.accent} 
             />
             
-            {/* Botón de borrado rápido (Solo visible si hay texto) */}
             {searchQuery.length > 0 && (
                 <TouchableOpacity 
                     style={styles.clearButton} 

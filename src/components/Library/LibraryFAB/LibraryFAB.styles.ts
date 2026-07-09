@@ -4,6 +4,7 @@ import { colors, frosted } from '../../../styles/theme';
 export const styles = StyleSheet.create({
     fab: {
         ...frosted,
+        //backgroundColor: colors.reemplazo,
         position: 'absolute',
         right: 20,
         width: 60,

@@ -33,7 +33,7 @@ export const PlaybackService = async function() {
         
         try {
             // 1. Pedimos 15 canciones aleatorias al NAS
-            const randomTracks = await navidromeApi.getRandomSongs(15);
+            const randomTracks = await navidromeApi.getRandomSongs(20);
             
             if (randomTracks && randomTracks.length > 0) {
                 console.log("Log: Obtenidas " + randomTracks.length + " canciones para la radio.");

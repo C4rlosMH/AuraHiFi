@@ -30,5 +30,16 @@ export const styles = StyleSheet.create({
     },
     clearIcon: {
         color: colors.textMuted,
+    },
+    headerVariant: {
+        marginHorizontal: 0,
+        marginVertical: 18,
+        height: 44, // Altura exacta para encajar en el header sin estirarlo
+        backgroundColor: colors.glassDark, // Un fondo esmerilado más sutil
+        borderWidth: 0, // Quitamos bordes gruesos si los tiene
+        borderRadius: 21,
+    },
+    headerInput: {
+        fontSize: 16, // Quizás un texto ligeramente más grande o estándar para la cabecera
     }
 });

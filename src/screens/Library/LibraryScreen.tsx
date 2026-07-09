@@ -23,6 +23,11 @@ import CollectionGrid from '../../components/Library/CollectionGrid/CollectionGr
 import ListRowCard from '../../components/Library/CollapsibleSection/ListRowCard';
 import LibraryFAB from '../../components/Library/LibraryFAB/LibraryFAB';
 import CategoryFilter from '../../components/Library/CategoryFilter/CategoryFilter';
+import LibraryOptionsModal from '../../components/Library/LibraryOptionsModal/LibraryOptionsModal';
+import CreatePlaylistModal from '../../components/Library/CreatePlaylistModal/CreatePlaylistModal';
+import FusionBar from '../../components/Library/FusionBar/FusionBar';
+import LocalSearchBar from '../../components/Common/LocalSearchBar/LocalSearchBar';
+
 
 export default function LibraryScreen() {
     const navigation = useNavigation<any>();
@@ -40,6 +45,11 @@ export default function LibraryScreen() {
     const [isSelectMode, setIsSelectMode] = useState(false);
     const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<string[]>([]);
     const [isProcessingMath, setIsProcessingMath] = useState(false);
+
+    const [isOptionsModalVisible, setIsOptionsModalVisible] = useState(false);
+    const [isCreatePlaylistModalVisible, setIsCreatePlaylistModalVisible] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const fetchLibraryData = async () => {
         try {
@@ -164,18 +174,28 @@ export default function LibraryScreen() {
         try {
             setIsProcessingMath(true);
             let resultTracks: Track[] = [];
+            
+            // Textos amigables para la UI
+            let operationTitle = "";
 
             if (operation === 'union') {
                 resultTracks = await PlaylistMathService.getUnionFromIds(...selectedPlaylistIds);
+                operationTitle = "Unión de Listas (Fusión)";
             } else if (operation === 'intersection') {
                 resultTracks = await PlaylistMathService.getIntersectionFromIds(...selectedPlaylistIds);
+                operationTitle = "Intersección (Coincidencias)";
             } else if (operation === 'difference') {
                 const [baseId, ...restIds] = selectedPlaylistIds;
                 resultTracks = await PlaylistMathService.getDifferenceFromIds(baseId, ...restIds);
+                operationTitle = "Resta de Listas";
             }
 
             if (resultTracks.length > 0) {
-                playerService.playCollection(resultTracks[0], resultTracks);
+                // 🚀 AQUÍ ESTÁ EL CAMBIO: Navegamos a la pantalla de resultados
+                navigation.navigate('MathResult', { 
+                    tracks: resultTracks, 
+                    operationName: operationTitle 
+                });
                 cancelSelection();
             } else {
                 Alert.alert("Aura Hi-Fi", "El cruce de estas listas no arrojó ninguna canción en común.");
@@ -193,12 +213,24 @@ export default function LibraryScreen() {
     };
 
     const getFilteredData = () => {
-        if (activeCategory === null) return unifiedCollection;
-        if (activeCategory === 'Álbumes') return unifiedCollection.filter(item => item.type === 'album');
-        if (activeCategory === 'Playlists') return unifiedCollection.filter(item => item.type === 'playlist');
-        if (activeCategory === 'Artistas') return unifiedCollection.filter(item => item.type === 'artist');
-        if (activeCategory === 'guardados') return unifiedCollection.filter(item => item.isDownloaded === true);
-        return []; 
+        // 1. Filtro por Categoría
+        let filtered = unifiedCollection;
+        if (activeCategory === 'Álbumes') filtered = unifiedCollection.filter(item => item.type === 'album');
+        else if (activeCategory === 'Playlists') filtered = unifiedCollection.filter(item => item.type === 'playlist');
+        else if (activeCategory === 'Artistas') filtered = unifiedCollection.filter(item => item.type === 'artist');
+        else if (activeCategory === 'guardados') filtered = unifiedCollection.filter(item => item.isDownloaded === true);
+
+        // 2. Filtro por Búsqueda (Texto)
+        if (isSearchVisible && searchQuery.trim() !== '') {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(item => {
+                const safeTitle = String(item.title || item.name || '').toLowerCase();
+                const safeSubtitle = String(item.artist || item.subtitle || item.owner || '').toLowerCase();
+                return safeTitle.includes(query) || safeSubtitle.includes(query);
+            });
+        }
+
+        return filtered; 
     };
 
     if (isLoading) {
@@ -228,7 +260,13 @@ export default function LibraryScreen() {
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        <LibraryHeader />
+                        <LibraryHeader 
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            isSearchVisible={isSearchVisible}
+                            setIsSearchVisible={setIsSearchVisible}
+                            activeCategory={activeCategory}
+                        />
                     )}
 
                     <CategoryFilter 
@@ -262,6 +300,7 @@ export default function LibraryScreen() {
                     )}
 
                     <View style={styles.sectionWrapper}>
+                        {/* 🚀 Dejamos el CollectionGrid limpio, la función getFilteredData() ya hace toda la magia por detrás */}
                         <CollectionGrid 
                             title={activeCategory === null ? "Tu Coleccion" : activeCategory}
                             data={getFilteredData()}
@@ -274,29 +313,37 @@ export default function LibraryScreen() {
                 </ScrollView>
 
                 {isSelectMode && selectedPlaylistIds.length >= 2 && (
-                    <View style={styles.fusionBar}>
-                        {isProcessingMath ? (
-                            <ActivityIndicator size="small" color={colors.accent} />
-                        ) : (
-                            <>
-                                <TouchableOpacity style={styles.fusionBtn} onPress={() => executeMathOperation('union')}>
-                                    <Text style={styles.btnIcon}>∪</Text>
-                                    <Text style={styles.btnText}>Unir</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.fusionBtn} onPress={() => executeMathOperation('intersection')}>
-                                    <Text style={styles.btnIcon}>∩</Text>
-                                    <Text style={styles.btnText}>Cruzar</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.fusionBtn} onPress={() => executeMathOperation('difference')}>
-                                    <Text style={styles.btnIcon}>−</Text>
-                                    <Text style={styles.btnText}>Restar</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                    </View>
+                    <FusionBar 
+                        isProcessing={isProcessingMath}
+                        onUnion={() => executeMathOperation('union')}
+                        onIntersection={() => executeMathOperation('intersection')}
+                        onDifference={() => executeMathOperation('difference')}
+                    />
                 )}
 
-                {!isSelectMode && <LibraryFAB onPress={() => console.log('Acciones de Biblioteca')} />}
+                {/* 🚀 EL BOTÓN HÍBRIDO (VUELVE A LA VIDA) */}
+                {!isSelectMode && (
+                    <LibraryFAB 
+                        onPress={() => setIsOptionsModalVisible(true)}
+                    />
+                )}
+                <LibraryOptionsModal 
+                    isVisible={isOptionsModalVisible}
+                    onClose={() => setIsOptionsModalVisible(false)}
+                    onTriggerMathMode={() => setIsSelectMode(true)} 
+                    onTriggerNewPlaylist={() => setIsCreatePlaylistModalVisible(true)} 
+                    onTriggerSearch={() => setIsSearchVisible(true)} // 🚀 Enciende el buscador del Header
+                />
+
+                <CreatePlaylistModal 
+                    isVisible={isCreatePlaylistModalVisible}
+                    onClose={() => setIsCreatePlaylistModalVisible(false)}
+                    // 👇 Esto es magia: usamos la función de recarga nativa que ya tenías
+                    onSuccess={() => {
+                        Alert.alert("Aura Hi-Fi", "Playlist creada con éxito.");
+                        onRefresh(); // ¡Refresca la UI al instante!
+                    }}
+                />
             </View>
         </AuraBackground>
     );

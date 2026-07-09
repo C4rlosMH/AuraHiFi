@@ -80,9 +80,13 @@ export class PlaylistMathService {
    * Descarga múltiples playlists en paralelo y devuelve la Fusión (Unión)
    */
   static async getUnionFromIds(...playlistIds: string[]): Promise<Track[]> {
-    // Promise.all descarga todas las listas al mismo tiempo a latencia cero
     const playlists = await Promise.all(
-      playlistIds.map(id => navidromeApi.getPlaylistTracks(id))
+      playlistIds.map(id => 
+        navidromeApi.getPlaylistTracks(id).catch(error => {
+          console.error(`🚨 Error al descargar playlist (Unión) ${id}:`, error);
+          return []; // Si falla, devuelve vacío y no rompe las demás
+        })
+      )
     );
     return this.union(...playlists);
   }
@@ -92,7 +96,12 @@ export class PlaylistMathService {
    */
   static async getIntersectionFromIds(...playlistIds: string[]): Promise<Track[]> {
     const playlists = await Promise.all(
-      playlistIds.map(id => navidromeApi.getPlaylistTracks(id))
+      playlistIds.map(id => 
+        navidromeApi.getPlaylistTracks(id).catch(error => {
+          console.error(`🚨 Error al descargar playlist (Intersección) ${id}:`, error);
+          return []; 
+        })
+      )
     );
     return this.intersection(...playlists);
   }
@@ -107,10 +116,17 @@ export class PlaylistMathService {
     ...playlistIdsToSubtract: string[]
   ): Promise<Track[]> {
     
-    // El primer ID es la Base, los demás son los que vamos a restar
     const [basePlaylist, ...playlistsToSubtract] = await Promise.all([
-      navidromeApi.getPlaylistTracks(basePlaylistId),
-      ...playlistIdsToSubtract.map(id => navidromeApi.getPlaylistTracks(id))
+      navidromeApi.getPlaylistTracks(basePlaylistId).catch(error => {
+        console.error(`🚨 Error al descargar playlist Base ${basePlaylistId}:`, error);
+        return [];
+      }),
+      ...playlistIdsToSubtract.map(id => 
+        navidromeApi.getPlaylistTracks(id).catch(error => {
+          console.error(`🚨 Error al descargar playlist a restar ${id}:`, error);
+          return [];
+        })
+      )
     ]);
     
     return this.difference(basePlaylist, ...playlistsToSubtract);

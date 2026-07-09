@@ -4,12 +4,13 @@ import TrackPlayer, { Event, useTrackPlayerEvents } from 'react-native-track-pla
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { styles } from './LibraryFAB.styles';
-import { colors } from '../../../styles/theme'; // 🚀 Uso exclusivo de colores globales
+import { colors } from '../../../styles/theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+// 🚀 1. Limpiamos la interfaz para que solo exija el onPress
 interface LibraryFABProps {
     onPress: () => void;
 }
@@ -17,10 +18,8 @@ interface LibraryFABProps {
 export default function LibraryFAB({ onPress }: LibraryFABProps) {
     const [isMiniPlayerVisible, setIsMiniPlayerVisible] = useState(false);
 
-    // 1. Verificación dura y real al montar el componente
     const checkActualPlayerState = async () => {
         try {
-            // Si la cola está vacía, es imposible que el MiniPlayer esté renderizado
             const queue = await TrackPlayer.getQueue();
             setIsMiniPlayerVisible(queue.length > 0);
         } catch (error) {
@@ -32,31 +31,27 @@ export default function LibraryFAB({ onPress }: LibraryFABProps) {
         checkActualPlayerState();
     }, []);
 
-    // 2. Escuchamos eventos estrictos del motor nativo
     useTrackPlayerEvents([Event.PlaybackTrackChanged, Event.PlaybackQueueEnded], async (event) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         
         if (event.type === Event.PlaybackQueueEnded) {
-            // Si la música se acaba y la cola se vacía, el botón baja.
             setIsMiniPlayerVisible(false);
         } else if (event.type === Event.PlaybackTrackChanged) {
-            // Si hay un salto de pista válido, el botón sube/se mantiene arriba.
             setIsMiniPlayerVisible(event.nextTrack != null);
         }
     });
 
-    // 📏 Matemáticas exactas de UI:
-    // Si NO hay MiniPlayer -> bottom: 85 (Flota justo encima de la Navbar de 65px)
-    // Si SÍ hay MiniPlayer -> bottom: 150 (Flota encima del MiniPlayer)
     const dynamicBottom = isMiniPlayerVisible ? 150 : 85;
 
+    // 🚀 2. Adiós a la lógica híbrida camaleónica. Ahora es un botón directo y predecible.
     return (
         <TouchableOpacity 
             style={[styles.fab, { bottom: dynamicBottom }]} 
             onPress={onPress} 
             activeOpacity={0.8}
         >
-            <Ionicons name="add" size={32} color={colors.accent} />
+            {/* Usamos el ícono de 'add' o puedes cambiarlo por 'ellipsis-horizontal' si prefieres */}
+            <Ionicons name="add" size={28} color={colors.primary} />
         </TouchableOpacity>
     );
 }

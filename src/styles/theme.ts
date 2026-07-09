@@ -14,7 +14,7 @@ export const colors = {
 };
 
 export const frosted = {
-    backgroundColor: 'rgba(15, 15, 15, 0.35)',
+    backgroundColor: 'rgba(70, 70, 70, 0.38)',
     borderRadius: 20,
     
     // Bisel de luz matemática (Rim Light) para simular el relieve del vidrio

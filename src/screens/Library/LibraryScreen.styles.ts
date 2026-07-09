@@ -116,31 +116,35 @@ export const styles = StyleSheet.create({
         fontWeight: '600',
     },
     fusionBar: {
+        ...frosted,
         position: 'absolute',
-        bottom: 24,
+        // 🚀 PRUEBA DE FUEGO: Lo ponemos arriba (top) para descartar que la barra de navegación lo oculte
+        top: 150, 
         left: 20,
         right: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        backgroundColor: 'rgba(28, 28, 30, 0.95)',
-        borderRadius: 20,
-        paddingVertical: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-        elevation: 10,
+        paddingVertical: 18,
+        backgroundColor: colors.reemplazo, 
+       /*  borderRadius: 24,
+        
+        borderWidth: 2, */
+        //borderColor: colors.light, // Borde morado brillante para que resalte
+        zIndex: 99999, // Z-index exagerado
+        elevation: 20,
     },
     fusionBtn: {
         alignItems: 'center',
-        paddingHorizontal: 10,
+        justifyContent: 'center',
+        paddingHorizontal: 12, // Reduje un poco el padding por si tu pantalla es angosta
     },
     btnIcon: {
-        color: colors.accent,
-        fontSize: 22,
+        color: colors.light,
+        fontSize: 24,
         fontWeight: 'bold',
+        marginBottom: 4,
     },
     btnText: {
         color: colors.primary,
-        fontSize: 12,
-        marginTop: 2,
+        fontSize: 13,
+        fontWeight: '600',
     }
 });

@@ -17,6 +17,8 @@ import CollectionMetadata from '../../components/CollectionDetail/Metadata/Colle
 import CollectionActions from '../../components/CollectionDetail/Actions/CollectionActions';
 import CollectionTrackList from '../../components/CollectionDetail/TrackList/CollectionTrackList';
 import LocalSearchBar from '../../components/Common/LocalSearchBar/LocalSearchBar';
+import AddSongsModal from '../../components/CollectionDetail/AddSongsModal/AddSongsModal';
+
 
 // --- Estilos ---
 import { styles } from './CollectionDetailScreen.styles';
@@ -38,6 +40,8 @@ export default function CollectionDetailScreen() {
     const [isDownloaded, setIsDownloaded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [downloadProgress, setDownloadProgress] = useState<string | null>(null);
+    const isPlaylist = type === 'playlist';
+    const [isAddModalVisible, setIsAddModalVisible] = useState(false);
 
     const scrollViewRef = useRef<ScrollView>(null);
 
@@ -211,6 +215,16 @@ export default function CollectionDetailScreen() {
         }
     };
 
+    const handleShufflePlay = () => {
+    if (filteredTracks.length === 0) return;
+    
+    // Hacemos una copia de las canciones y las mezclamos aleatoriamente
+    const shuffledTracks = [...filteredTracks].sort(() => Math.random() - 0.5);
+    
+    // Le mandamos la primera canción de la nueva lista y la lista completa mezclada
+    playerService.playCollection(shuffledTracks[0], shuffledTracks);
+};
+
     const filteredTracks = details?.tracks?.filter((track: any) => {
         const searchLower = searchQuery.toLowerCase();
         
@@ -276,20 +290,33 @@ export default function CollectionDetailScreen() {
                             isPinned={isPinned}
                             isDownloaded={isDownloaded}
                             downloadProgress={downloadProgress}
+                            isPlaylist={isPlaylist}
+                            onAddSongs={() => setIsAddModalVisible(true)}
                             onToggleLike={handleToggleLike}
                             onTogglePin={handleTogglePin}
                             onDownload={handleDownload}
                             onPlayAll={handlePlayAll}
+                            onShufflePlay={handleShufflePlay}
                         />
                     </View>
 
                     <CollectionTrackList 
                         tracks={filteredTracks} 
                         onPlayTrack={handlePlayTrack} 
+                        showCovers={isPlaylist}
                     />
 
                 </ScrollView>
             </View>
+            <AddSongsModal 
+                isVisible={isAddModalVisible}
+                playlistId={id}
+                onClose={() => setIsAddModalVisible(false)}
+                onSuccess={() => {
+                    Alert.alert("Aura Hi-Fi", "Canciones añadidas exitosamente");
+                    loadData();
+                }}
+            />
         </AuraBackground>
     );
 }

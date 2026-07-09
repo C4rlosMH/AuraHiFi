@@ -47,5 +47,11 @@ export const styles = StyleSheet.create({
     },
     addActionIcon: {
         color: colors.surface, // Negro o el color de fondo para que contraste con el Cian
+    },
+    coverArt:{
+        width: 44,
+        height: 44,
+        borderRadius: 6,
+        marginRight: 12,
     }
 });

@@ -10,6 +10,8 @@ import HomeScreen from '../screens/Home/HomeScreen';
 import LibraryScreen from '../screens/Library/LibraryScreen';
 import CollectionDetailScreen from '../screens/CollactionDetailScreen/CollectionDetailScreen'; 
 import ArtistDetailScreen from '../screens/ArtistDetail/ArtistDetailScreen';
+import MathResultScreen from '../screens/MathResult/MathResultScreen';
+
 
 // --- Estilos ---
 import { styles } from './AppNavigator.styles';
@@ -37,6 +39,7 @@ function LibraryStackNavigator() {
             <Stack.Screen name="LibraryMain" component={LibraryScreen} />
             <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
             <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} />
+            <Stack.Screen name="MathResult" component={MathResultScreen} />
         </Stack.Navigator>
     );
 }

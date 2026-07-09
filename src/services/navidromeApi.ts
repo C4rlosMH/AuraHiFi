@@ -10,7 +10,7 @@ const VERSION = '1.16.1';
 const getAuthQuery = () => `u=${USER}&p=${PASS}&v=${VERSION}&c=${CLIENT}&f=json`;
 
 // 1. NUESTRA NUEVA FUNCIÓN BUILD URL BLINDADA
-const buildUrl = (endpoint: string, extraParams: Record<string, any> = {}) => {
+export const buildUrl = (endpoint: string, extraParams: Record<string, any> = {}) => {
     // Usamos encodeURIComponent en USER y PASS para evitar que símbolos rompan la URL
     let url = `${BASE_URL}/${endpoint}?u=${encodeURIComponent(USER || '')}&p=${encodeURIComponent(PASS || '')}&v=${VERSION}&c=${encodeURIComponent(CLIENT)}&f=json`;
     
@@ -25,7 +25,7 @@ const buildUrl = (endpoint: string, extraParams: Record<string, any> = {}) => {
 };
 
 // 2. NUESTRO ATRAPA-ERRORES PARA DEPURACIÓN
-const fetchFromNavidrome = async (url: string) => {
+export const fetchFromNavidrome = async (url: string) => {
     const response = await fetch(url);
     const text = await response.text(); 
     try {

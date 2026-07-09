@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Image } from 'react-native';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -14,9 +14,10 @@ interface CollectionTrackListProps {
     onPlayTrack: (track: Track, index: number) => void;
     isFromPlaylist?: boolean;
     onRemoveFromPlaylist?: (trackId: string) => void;
+    showCovers?: boolean;
 }
 
-export default function CollectionTrackList({ tracks, onPlayTrack, isFromPlaylist, onRemoveFromPlaylist }: CollectionTrackListProps) {
+export default function CollectionTrackList({ tracks, onPlayTrack, isFromPlaylist, onRemoveFromPlaylist, showCovers }: CollectionTrackListProps) {
     
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
@@ -82,14 +83,15 @@ export default function CollectionTrackList({ tracks, onPlayTrack, isFromPlaylis
                         activeOpacity={1} 
                     >
                         <Text style={styles.trackNumber}>{index + 1}</Text>
-                        
+                        {showCovers && (track.coverArtUrl || (track as any).artwork) && (
+                            <Image 
+                                source={{ uri: track.coverArtUrl || (track as any).artwork }} 
+                                style={styles.coverArt} // Usaremos el mismo nombre de clase que en tus artistas
+                            />
+                        )}
                         <View style={styles.trackInfo}>
-                            <Text style={styles.trackTitle} numberOfLines={1}>
-                                {track.title}
-                            </Text>
-                            <Text style={styles.trackArtist} numberOfLines={1}>
-                                {track.artist}
-                            </Text>
+                            <Text style={styles.trackTitle} numberOfLines={1}>{track.title}</Text>
+                            <Text style={styles.trackArtist} numberOfLines={1}>{track.artist}</Text>
                         </View>
                         
                         <TouchableOpacity 

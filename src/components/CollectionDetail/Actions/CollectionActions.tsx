@@ -9,10 +9,13 @@ interface CollectionActionsProps {
     isPinned: boolean;
     isDownloaded: boolean;
     downloadProgress?: string | null;
+    isPlaylist?: boolean;
+    onAddSongs?: () => void;
     onToggleLike: () => void;
     onTogglePin: () => void;
     onDownload: () => void;
     onPlayAll: () => void;
+    onShufflePlay: () => void;
 }
 
 export default function CollectionActions({
@@ -20,14 +23,27 @@ export default function CollectionActions({
     isPinned,
     isDownloaded,
     downloadProgress,
+    isPlaylist = false,
+    onAddSongs,
     onToggleLike,
     onTogglePin,
     onDownload,
-    onPlayAll
+    onPlayAll,
+    onShufflePlay,
+
 }: CollectionActionsProps) {
     return (
         <View style={styles.actionRow}>
             <View style={styles.leftActions}>
+                {/* AÑADIR */}
+                {isPlaylist && onAddSongs && (
+                    <TouchableOpacity style={styles.iconButton} onPress={onAddSongs}>
+                        <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
+                    </TouchableOpacity>
+                )}
+                
+                
+
                 {/* LIKE */}
                 <TouchableOpacity style={styles.iconButton} onPress={onToggleLike}>
                     <Ionicons 
@@ -59,6 +75,11 @@ export default function CollectionActions({
                     )}
                 </TouchableOpacity>
             </View>
+
+            {/* SHUFFLE */}
+                <TouchableOpacity style={styles.iconButton} onPress={onShufflePlay}>
+                    <Ionicons name="shuffle" size={26} color={colors.primary} />
+                </TouchableOpacity>
 
             {/* PLAY ALL (Botón gigante flotante) */}
             <TouchableOpacity style={styles.playButton} onPress={onPlayAll}>
