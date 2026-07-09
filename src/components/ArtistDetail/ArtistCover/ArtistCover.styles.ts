@@ -1,4 +1,6 @@
 import { StyleSheet, Dimensions } from 'react-native';
+import { colors } from '../../../styles/theme';
+
 
 const { width } = Dimensions.get('window');
 
@@ -6,7 +8,7 @@ export const styles = StyleSheet.create({
     container: {
         width: width,
         height: width, // 🚀 Cuadrado perfecto edge-to-edge que llena la pantalla horizontalmente
-        backgroundColor: '#0a0a0a',
+        backgroundColor: colors.background,
     },
     image: {
         width: '100%',
@@ -17,6 +19,6 @@ export const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        backgroundColor: colors.surface,
     }
 });

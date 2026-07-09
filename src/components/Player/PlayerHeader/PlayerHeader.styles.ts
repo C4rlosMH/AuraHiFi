@@ -1,6 +1,6 @@
 import { StyleSheet, Platform } from 'react-native';
 // 🔗 IMPORTACIÓN DIRECTA: Traemos 'frosted' de manera independiente
-import { frosted } from '../../../styles/theme'; 
+import { frosted, colors } from '../../../styles/theme'; 
 
 export const styles = StyleSheet.create({
     headerContainer: {
@@ -46,12 +46,12 @@ export const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     contextTitle: {
-        color: '#FFFFFF',
+        color: colors.primary,
         fontSize: 14,
         fontWeight: '600',
     },
     contextArtist: {
-        color: 'rgba(255, 255, 255, 0.45)',
+        color: colors.textMuted,
         fontSize: 11,
         fontWeight: '400',
         marginTop: 1,

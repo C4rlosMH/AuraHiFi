@@ -3,6 +3,7 @@ import { View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import TrackPlayer, { RepeatMode } from 'react-native-track-player';
 import { styles } from './ReproductionControls.styles';
+import { colors } from '../../../styles/theme';
 
 interface ReproductionControlsProps {
     isPlaying: boolean;
@@ -18,7 +19,7 @@ export default function ReproductionControls({
 
     const getRepeatIconColor = () => {
         if (repeatState === RepeatMode.Queue || repeatState === RepeatMode.Track) return '#00ffcc';
-        return 'rgba(255,255,255,0.6)';
+        return colors.textMuted;
     };
 
     const getRepeatIconName = () => {
@@ -29,26 +30,26 @@ export default function ReproductionControls({
     return (
         <View style={styles.controlsRow}>
             <TouchableOpacity onPress={onToggleShuffle}>
-                <MaterialIcons name="shuffle" size={28} color={shuffleOn ? '#00ffcc' : 'rgba(255,255,255,0.6)'} />
+                <MaterialIcons name="shuffle" size={28} color={shuffleOn ? colors.light : colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => TrackPlayer.skipToPrevious()}>
-                <MaterialIcons name="skip-previous" size={38} color="#ffffff" />
+                <MaterialIcons name="skip-previous" size={38} color={colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity 
                 style={styles.playCircle}
                 onPress={() => isPlaying ? TrackPlayer.pause() : TrackPlayer.play()}
             >
-                <MaterialIcons name={isPlaying ? "pause" : "play-arrow"} size={42} color="#000000" />
+                <MaterialIcons name={isPlaying ? "pause" : "play-arrow"} size={42} color={colors.black} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => TrackPlayer.skipToNext()}>
-                <MaterialIcons name="skip-next" size={38} color="#ffffff" />
+                <MaterialIcons name="skip-next" size={38} color={colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={onCycleRepeat}>
-                <MaterialIcons name={getRepeatIconName()} size={28} color={getRepeatIconColor()} />
+                <MaterialIcons name={getRepeatIconName()} size={28} color={colors.light} />
             </TouchableOpacity>
         </View>
     );

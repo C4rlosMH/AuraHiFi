@@ -30,41 +30,14 @@ export default function ScrubberBar() {
 
     return (
         <View style={styles.progressContainer}>
-            
-            {/* 🚀 NUESTRO SLIDER CUSTOM CON EL MOTOR GESTUAL */}
             <View 
-                style={{ width: '100%', height: 40, justifyContent: 'center' }}
+                style={styles.sliderTrackContainer}
                 onLayout={handleLayout}
                 {...panHandlers}
             >
-                {/* 1. Pista de fondo (Gris transparente) */}
-                <View style={{ height: 4, backgroundColor: 'rgba(255, 255, 255, 0.2)', borderRadius: 2 }} />
-
-                {/* 2. Pista de progreso (Cyan) - Se estira según el porcentaje */}
-                <View style={{ 
-                    position: 'absolute', 
-                    height: 4, 
-                    width: `${progressPercent}%`, 
-                    backgroundColor: '#00ffcc', 
-                    borderRadius: 2,
-                    left: 0 
-                }} />
-
-                {/* 3. La Bolita (Thumb) - Sigue tu dedo a 60FPS */}
-                <View style={{ 
-                    position: 'absolute', 
-                    left: `${progressPercent}%`, 
-                    width: 16, 
-                    height: 16, 
-                    borderRadius: 8, 
-                    backgroundColor: '#ffffff', 
-                    marginLeft: -8, // Centra la bolita perfectamente
-                    shadowColor: '#00ffcc', // Efecto neón/glow
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.8,
-                    shadowRadius: 4,
-                    elevation: 5 
-                }} />
+                <View style={styles.trackBackground} />
+                <View style={[styles.trackProgress, { width: `${progressPercent}%` }]} />
+                <View style={[styles.thumb, { left: `${progressPercent}%` }]} />
             </View>
 
             <View style={styles.timeRow}>

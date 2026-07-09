@@ -3,7 +3,7 @@ import { StyleSheet, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import ImageColors from 'react-native-image-colors';
-import { gradients } from '../../styles/theme';
+import { colors, gradients } from '../../styles/theme';
 
 interface AuraBackgroundProps {
     children: React.ReactNode;
@@ -27,7 +27,7 @@ export default function AuraBackground({ children, forceType, coverUrl }: AuraBa
                 console.log(`🎨 Extrayendo colores de: ${coverUrl}`);
                 
                 ImageColors.getColors(coverUrl, {
-                    fallback: '#0a0a0c', // Color por si falla
+                    fallback: colors.background, // Color por si falla
                     cache: true,         // Lo guarda en RAM para que sea instantáneo al regresar
                     key: coverUrl,       // Llave de caché
                 }).then((result) => {

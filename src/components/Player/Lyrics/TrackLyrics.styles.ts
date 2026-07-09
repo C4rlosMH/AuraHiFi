@@ -1,4 +1,6 @@
 import { StyleSheet } from 'react-native';
+import { colors } from '../../../styles/theme';
+
 
 export const styles = StyleSheet.create({
     container: {
@@ -20,9 +22,9 @@ export const styles = StyleSheet.create({
         textAlign: 'center',
     },
     activeText: {
-        color: '#FFFFFF',
+        color: colors.primary,
     },
     inactiveText: {
-        color: 'rgba(255, 255, 255, 0.3)',
+        color: colors.textMuted,
     }
 });

@@ -2,6 +2,8 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from './CollectionHeader.styles';
+import { colors } from '../../../styles/theme';
+
 
 interface CollectionHeaderProps {
     onBack: () => void;
@@ -13,12 +15,12 @@ export default function CollectionHeader({ onBack, onOptions }: CollectionHeader
         <View style={styles.headerContainer } pointerEvents="box-none">
             {/* Botón de Regreso con capa Aura Frosted */}
             <TouchableOpacity style={styles.iconButton} onPress={onBack}>
-                <Ionicons name="chevron-back" size={24} color="#ffffff" style={styles.iconBackShift} />
+                <Ionicons name="chevron-back" size={24} color={colors.primary} style={styles.iconBackShift} />
             </TouchableOpacity>
             
             {/* Botón de Opciones con capa Aura Frosted */}
             <TouchableOpacity style={styles.iconButton} onPress={onOptions}>
-                <Ionicons name="ellipsis-vertical" size={22} color="#ffffff" />
+                <Ionicons name="ellipsis-vertical" size={22} color={colors.primary} />
             </TouchableOpacity>
         </View>
     );

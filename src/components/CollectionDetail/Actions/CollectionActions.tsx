@@ -83,7 +83,7 @@ export default function CollectionActions({
 
             {/* PLAY ALL (Botón gigante flotante) */}
             <TouchableOpacity style={styles.playButton} onPress={onPlayAll}>
-                <Ionicons name="play" size={28} color="#000" style={styles.playIconShift} />
+                <Ionicons name="play" size={28} color={colors.black} style={styles.playIconShift} />
             </TouchableOpacity>
         </View>
     );

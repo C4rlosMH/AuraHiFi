@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './PlayerHeader.styles';
+import { colors } from '../../../styles/theme';
+
 
 interface PlayerHeaderProps {
     onClose: () => void;
@@ -27,7 +29,7 @@ export const PlayerHeader: React.FC<PlayerHeaderProps> = ({
     return (
         <View style={styles.headerContainer}>
             <TouchableOpacity onPress={onClose} style={styles.frostedButton}>
-                <Ionicons name="chevron-down" size={24} color="#FFFFFF" />
+                <Ionicons name="chevron-down" size={24} color={colors.primary} />
             </TouchableOpacity>
 
             {isContextActive && trackTitle ? (
@@ -43,7 +45,7 @@ export const PlayerHeader: React.FC<PlayerHeaderProps> = ({
             )}
 
             <TouchableOpacity onPress={onOpenOptions || (() => {})} style={styles.frostedButton}>
-                <Ionicons name="ellipsis-horizontal" size={20} color="#FFFFFF" />
+                <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
             </TouchableOpacity>
         </View>
     );

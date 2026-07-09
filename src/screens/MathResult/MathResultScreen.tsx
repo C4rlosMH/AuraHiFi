@@ -12,6 +12,7 @@ import { Track } from '../../services/navidromeApi';
 import { playerService } from '../../services/PlayerService';
 
 import { styles } from './MathResultScreen.styles';
+import { colors } from '../../styles/theme';
 
 export default function MathResultScreen() {
     const route = useRoute<any>();
@@ -48,11 +49,11 @@ export default function MathResultScreen() {
                             <View style={styles.actionRow}>
                                 <TouchableOpacity style={[styles.actionButton, styles.playButton]} onPress={handlePlayAll}>
                                     <Ionicons name="play" size={20} color="#000" />
-                                    <Text style={[styles.buttonText, { color: '000' }]}>Escuchar</Text>
+                                    <Text style={[styles.buttonText, styles.playButtonText]}>Escuchar</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity style={styles.actionButton} onPress={() => setIsCreateModalVisible(true)}>
-                                    <Ionicons name="save-outline" size={20} color="#FFF" />
+                                    <Ionicons name="save-outline" size={20} color={colors.primary} />
                                     <Text style={styles.buttonText}>Guardar</Text>
                                 </TouchableOpacity>
                             </View>

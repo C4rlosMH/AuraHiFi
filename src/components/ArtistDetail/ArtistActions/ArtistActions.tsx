@@ -18,7 +18,7 @@ export default function ArtistActions({ onPlayAll, onShuffle }: ArtistActionsPro
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.playButton} onPress={onPlayAll} activeOpacity={0.8}>
-                <Ionicons name="play" size={22} color="#000" style={{ marginLeft: 3 }} />
+                <Ionicons name="play" size={22} style={styles.playBtnText} />
             </TouchableOpacity>
         </View>
     );

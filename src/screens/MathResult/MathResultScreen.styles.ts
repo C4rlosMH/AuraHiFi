@@ -53,5 +53,8 @@ export const styles = StyleSheet.create({
         color: colors.primary,
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    playButtonText: {
+        color: colors.black, 
     }
 });

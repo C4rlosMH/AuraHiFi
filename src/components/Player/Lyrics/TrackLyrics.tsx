@@ -4,6 +4,8 @@ import { useActiveTrack, useProgress } from 'react-native-track-player';
 import { navidromeApi } from '../../../services/navidromeApi';
 import { parseLrc, ParsedLyric } from '../../../utils/lrcParser';
 import { styles } from './TrackLyrics.styles';
+import { colors } from '../../../styles/theme';
+
 
 export default function TrackLyrics() {
   const track = useActiveTrack();
@@ -94,7 +96,7 @@ export default function TrackLyrics() {
   if (isLoading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <ActivityIndicator size="large" color={colors.light} />
       </View>
     );
   }

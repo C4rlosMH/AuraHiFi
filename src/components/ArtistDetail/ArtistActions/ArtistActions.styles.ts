@@ -30,4 +30,8 @@ export const styles = StyleSheet.create({
         borderWidth: 1, 
         borderColor: colors.glassDark 
     },
+    playBtnText: {
+        color: colors.black,
+        marginLeft: 3,
+    },
 });

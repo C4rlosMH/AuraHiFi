@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
+import { colors } from '../../../styles/theme';
 
 interface PlayerBackgroundProps {
     artwork?: string;
@@ -8,7 +9,7 @@ interface PlayerBackgroundProps {
 export default function PlayerBackground({ artwork }: PlayerBackgroundProps) {
     if (!artwork) {
         // Fondo de respaldo si no hay canción o no tiene portada
-        return <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#0a0a0a' }]} />;
+        return <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background }]} />;
     }
 
     return (
@@ -20,7 +21,7 @@ export default function PlayerBackground({ artwork }: PlayerBackgroundProps) {
                 resizeMode="cover"
             />
             {/* Capa de contraste ahumada */}
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0, 0, 0, 0.55)' }]} />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.glassBadge }]} />
         </>
     );
 }

@@ -5,6 +5,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+import { colors } from '../styles/theme';
+
+
 // --- PANTALLAS REALES ---
 import HomeScreen from '../screens/Home/HomeScreen';
 import LibraryScreen from '../screens/Library/LibraryScreen';
@@ -53,8 +56,8 @@ export default function AppNavigator() {
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarStyle: styles.tabBar,
-                tabBarActiveTintColor: '#FFFFFF',
-                tabBarInactiveTintColor: '#555555',
+                tabBarActiveTintColor: colors.light, // 🚀 Usamos el blanco del tema
+                tabBarInactiveTintColor: colors.textMuted, // 🚀 Usamos el texto muteado del tema
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName = 'ellipse';
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './TrackMetadata.styles';
+import { colors } from '../../../styles/theme';
 
 interface TrackMetadataProps {
     title: string;
@@ -25,7 +26,7 @@ export default function TrackMetadata({ title, artist, isFavorite, onToggleFavor
                 <MaterialIcons 
                     name={isFavorite ? "favorite" : "favorite-border"} 
                     size={28} 
-                    color={isFavorite ? "#00ffcc" : "#ffffff"} 
+                    color={isFavorite ? colors.light : colors.primary} 
                 />
             </TouchableOpacity>
         </View>

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from './FooterActions.styles';
+import { colors } from '../../../styles/theme';
 
 interface FooterActionsProps {
     showQueue: boolean;
@@ -13,15 +14,15 @@ export default function FooterActions({ showQueue, onToggleQueue, onOpenLyrics }
     return (
         <View style={styles.footerRow}>
             <TouchableOpacity style={styles.footerAction}>
-                <MaterialIcons name="podcasts" size={24} color="rgba(255,255,255,0.8)" />
+                <MaterialIcons name="podcasts" size={24} color={colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.footerAction} onPress={onOpenLyrics}>
-                <MaterialIcons name="lyrics" size={24} color="rgba(255,255,255,0.8)" />
+                <MaterialIcons name="lyrics" size={24} color={colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.footerAction} onPress={onToggleQueue}>
-                <MaterialIcons name="queue-music" size={24} color={showQueue ? '#00ffcc' : 'rgba(255,255,255,0.8)'} />
+                <MaterialIcons name="queue-music" size={24} color={showQueue ? colors.light : colors.textMuted} />
             </TouchableOpacity>
         </View>
     );
