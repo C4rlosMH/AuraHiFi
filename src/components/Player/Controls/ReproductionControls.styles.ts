@@ -8,8 +8,8 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
     },
     playCircle: {
-        width: 76,
-        height: 76,
+        width: 64,
+        height: 64,
         borderRadius: 38,
         backgroundColor: colors.light,
         justifyContent: 'center',

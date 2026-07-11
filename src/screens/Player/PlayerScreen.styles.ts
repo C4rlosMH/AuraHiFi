@@ -30,4 +30,12 @@ export const styles = StyleSheet.create({
         flex: 1,
         width: '100%',
     },
+    losslessWrapper: {
+            width: '100%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginVertical: 12, 
+            marginBottom: 12,
+            height: 28, // Le dimos un poco más de altura para acomodar la burbuja
+        },
 });

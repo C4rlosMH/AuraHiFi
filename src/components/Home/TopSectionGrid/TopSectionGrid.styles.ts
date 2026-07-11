@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
         opacity: 0.5,
     },
     activeDot: {
-        width: 15,
+        width: 12,
         backgroundColor: colors.light,
         opacity: 1,
     }

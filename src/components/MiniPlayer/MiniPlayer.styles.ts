@@ -4,6 +4,7 @@ import { frosted, colors } from '../../styles/theme'; // Importamos todo el tema
 export const styles = StyleSheet.create({
     miniPlayerContainer: {
         ...frosted,
+        backgroundColor: colors.glassBadge,
         position: 'absolute',
         bottom: 75,
         left: 10,

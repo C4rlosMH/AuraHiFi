@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal, Animated, PanResponder, Dimensions } from 'react-native';
+import { View, Modal, Animated, PanResponder, Dimensions, Image } from 'react-native';
 import TrackPlayer, { RepeatMode, useActiveTrack } from 'react-native-track-player';
 
 // --- Servicios ---
@@ -18,6 +18,7 @@ import ReproductionControls from '../../components/Player/Controls/ReproductionC
 import FooterActions from '../../components/Player/FooterActions/FooterActions';
 import QueuePanel from '../../components/Player/Queue/QueuePanel';
 import TrackLyrics from '../../components/Player/Lyrics/TrackLyrics';
+import LosslessBadge from '../../components/Player/LosslessBadge/LosslessBadge';
 
 // --- Estilos ---
 import { styles } from './PlayerScreen.styles';
@@ -280,6 +281,12 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                         </View>
                     )}
 
+                    {(!showLyrics && !showQueue) && (
+                        <View style={styles.losslessWrapper}>
+                            <LosslessBadge />
+                        </View>
+                    )}
+
                     {/* Panel de Controles e Información */}
                     <GlassPanel artwork={trackInfo?.artwork}>
                         {(!showLyrics && !showQueue) && (
@@ -305,6 +312,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                     {/* Footer */}
                     <FooterActions 
                         showQueue={showQueue}
+                        showLyrics={showLyrics}
                         onToggleQueue={() => {
                             setShowQueue(!showQueue);
                             if (showLyrics) setShowLyrics(false);

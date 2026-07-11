@@ -87,7 +87,7 @@ export const navidromeApi = {
             artist: song.artist,
             album: song.album,
             duration: song.duration,
-            coverArtUrl: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+            coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
             streamUrl: buildUrl('stream', { id: song.id }),
             starred: song.starred !== undefined
         }));
@@ -234,7 +234,7 @@ export const navidromeApi = {
                 album: song.album,
                 albumId: song.albumId,    // 🚀 Asegurado
                 duration: song.duration,
-                coverArtUrl: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+                coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
                 streamUrl: buildUrl('stream', { id: song.id })
             })),
 
@@ -246,38 +246,6 @@ export const navidromeApi = {
                 coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
             }))
         };
-    },
-
-    getSyncedLyricsFromLRCLIB: async (artist: string, title: string): Promise<string | null> => {
-        try {
-            const encodedArtist = encodeURIComponent(artist);
-            const encodedTitle = encodeURIComponent(title);
-            const url = `https://lrclib.net/api/get?artist_name=${encodedArtist}&track_name=${encodedTitle}`;
-            
-            const response = await fetch(url);
-            if (!response.ok) return null;
-            
-            const data = await response.json();
-            if (data && data.syncedLyrics) {
-                return data.syncedLyrics;
-            }
-            return null;
-        } catch (error) {
-            console.error("Error contactando a LRCLIB:", error);
-            return null;
-        }
-    },
-
-    getLyrics: async (artist: string, title: string): Promise<string | null> => {
-        try {
-            const url = buildUrl('getLyrics', { artist, title });
-            const data = await fetchFromNavidrome(url);
-            const lyrics = data['subsonic-response']?.lyrics?.value;
-            return lyrics || null;
-        } catch (error) {
-            console.error("Error al obtener letras estáticas de Navidrome:", error);
-            return null;
-        }
     },
 
     // ------------------------------------------------------------------
@@ -347,7 +315,7 @@ export const navidromeApi = {
                 artist: song.artist,
                 album: song.album,
                 duration: song.duration,
-                artwork: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+                artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
                 url: buildUrl('stream', { id: song.id })
             }))
         };
@@ -373,7 +341,7 @@ export const navidromeApi = {
                 artist: song.artist,
                 album: song.album,
                 duration: song.duration,
-                artwork: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+                artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
                 url: buildUrl('stream', { id: song.id })
             }))
         };
@@ -398,7 +366,7 @@ export const navidromeApi = {
             artist: song.artist,
             album: song.album,
             duration: song.duration,
-            coverArtUrl: buildUrl('getCoverArt', { id: song.id, size: 300 }),
+            coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
             streamUrl: buildUrl('stream', { id: song.id })
         }));
     },

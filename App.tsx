@@ -15,6 +15,7 @@ import AppNavigator from './src/Navigation/AppNavigator';
 import MiniPlayer from './src/components/MiniPlayer/MiniPlayer'; // <--- IMPORTACIÓN
 import PlayerScreen from './src/screens/Player/PlayerScreen';
 import { styles } from './App.styles';
+import { colors } from './src/styles/theme'
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
@@ -45,17 +46,22 @@ export default function App() {
 
     useEffect(() => {
         async function initialize() {
-            // await setupTrackPlayer(); // (Descomentar cuando lo tengas)
+            // 🚀 1. RESTAURAMOS LA INICIALIZACIÓN DEL MOTOR (ESTO ES LO QUE SE ROMPIÓ)
+            await setupTrackPlayer(); 
             setIsLoading(false);
+            
+            // 🚀 2. RESTAURAMOS TU LÓGICA DE DESCARGAS EN SEGUNDO PLANO
+            navidromeApi.getStarredTracks().then(starred => {
+                if (starred.length > 0) downloadManager.downloadCollection(starred, () => {});
+            }).catch(err => console.error(err));
         }
         initialize();
 
-        // 🚀 NUEVO: Escuchador global para abrir el reproductor desde cualquier parte
+        // 3. Mantenemos el escuchador para abrir el player gigante desde el Home
         const subscription = DeviceEventEmitter.addListener('expandPlayer', () => {
             setIsFullPlayerVisible(true);
         });
 
-        // Limpiamos el escuchador si la app se destruye
         return () => {
             subscription.remove();
         };
@@ -65,7 +71,7 @@ export default function App() {
         return (
             <SafeAreaProvider>
                 <View style={styles.centerContainer}>
-                    <ActivityIndicator size="large" color="#00ffcc" />
+                    <ActivityIndicator size="large" color={colors.light} />
                     <Text style={styles.loadingText}>Conectando con el búnker NAS...</Text>
                 </View>
             </SafeAreaProvider>

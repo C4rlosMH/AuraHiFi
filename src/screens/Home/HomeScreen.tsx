@@ -136,6 +136,7 @@ export default function HomeScreen() {
                 <ScrollView 
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
+                    fadingEdgeLength={20} // 🚀 AQUÍ AGREGAS LA PROPIEDAD
                     refreshControl={
                         <RefreshControl 
                             refreshing={isRefreshing} 

@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-end',
-        marginBottom: 25,
+        marginBottom: 14,
     },
     textMetadataColumn: {
         flex: 1,

@@ -1,23 +1,19 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { colors, frosted } from '../../../styles/theme';
+import { frosted } from '../../../styles/theme'; // 🚀 Importamos tu diseño centralizado
 
-
-// Extraemos el ancho de la pantalla, igual que en tu AlbumArtwork
 const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
     panelContainer: {
-        ...frosted,
-        borderRadius: 21,
-        overflow: 'hidden', 
-        // 📐 ALINEACIÓN MATEMÁTICA PERFECTA
-        width: width * 0.85,     // Mismo ancho exacto que tu portada (85%)
-        alignSelf: 'center',     // Lo forzamos al centro para que encaje como bloque
-        marginBottom: 15,        // Separación inferior
-        
+        ...frosted,                // 🚀 Aplicamos toda tu magia esmerilada del theme.ts
+        width: width * 0.85,       
+        alignSelf: 'center',
+        borderRadius: 21,          
+        marginBottom: 15,          
+        overflow: 'hidden',        // Mantiene el contenido respetando los bordes curvos
     },
     contentContainer: {
-        paddingVertical: 20,
-        paddingHorizontal: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 15,
     }
 });

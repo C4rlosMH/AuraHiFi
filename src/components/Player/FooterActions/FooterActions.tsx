@@ -7,11 +7,12 @@ import { colors } from '../../../styles/theme';
 
 interface FooterActionsProps {
     showQueue: boolean;
+    showLyrics: boolean;
     onToggleQueue: () => void;
     onOpenLyrics: () => void;
 }
 
-export default function FooterActions({ showQueue, onToggleQueue, onOpenLyrics }: FooterActionsProps) {
+export default function FooterActions({ showQueue, showLyrics, onToggleQueue, onOpenLyrics }: FooterActionsProps) {
     return (
         <View style={styles.footerRow}>
             <TouchableOpacity style={styles.footerAction}>
@@ -19,7 +20,7 @@ export default function FooterActions({ showQueue, onToggleQueue, onOpenLyrics }
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.footerAction} onPress={onOpenLyrics}>
-                <MaterialIcons name="lyrics" size={24} color={colors.textMuted} />
+                <MaterialIcons name="lyrics" size={24} color={showLyrics ? colors.light : colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.footerAction} onPress={onToggleQueue}>

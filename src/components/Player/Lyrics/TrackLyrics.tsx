@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Text, ScrollView, View, ActivityIndicator } from 'react-native';
+import { Text, View, ActivityIndicator, FlatList } from 'react-native'; 
 import { useActiveTrack, useProgress } from 'react-native-track-player';
-import { navidromeApi } from '../../../services/navidromeApi';
-import { parseLrc, ParsedLyric } from '../../../utils/lrcParser';
+
+
+import { lyricsService } from '../../../services/lyricsService';
+import { ParsedLyric } from '../../../utils/lrcParser';
 import { styles } from './TrackLyrics.styles';
 import { colors } from '../../../styles/theme';
-
 
 export default function TrackLyrics() {
   const track = useActiveTrack();
   const { position } = useProgress(); 
   
-  // 🖐️ Nuestra "mano invisible" para hacer el scroll
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   
   const [lyrics, setLyrics] = useState<ParsedLyric[]>([]);
   const [staticLyrics, setStaticLyrics] = useState<string | null>(null);
@@ -27,32 +27,39 @@ export default function TrackLyrics() {
       setStaticLyrics(null);
       
       try {
-        // 1. PRIMERA CAPA: LRCLIB (Letras sincronizadas)
-        const syncedLyrics = await navidromeApi.getSyncedLyricsFromLRCLIB(track.artist, track.title);
+        // 🥇 PRIORIDAD 1: Buscar archivo .lrc en tu NAS
+        console.log(`Buscando .lrc en NAS para el ID: ${track.id}`);
+        const nasLyrics = await lyricsService.getLyricsFromNAS(track.id);
         
-        if (syncedLyrics) {
-          const parsed = parseLrc(syncedLyrics);
-          if (parsed.length > 0) {
-            setLyrics(parsed);
+        if (nasLyrics.synced.length > 0) {
+            console.log("¡Éxito! Letras sincronizadas obtenidas del NAS.");
+            setLyrics(nasLyrics.synced);
             setIsLoading(false);
             return;
-          }
         }
 
-        // 2. SEGUNDA CAPA: Navidrome (Plan de respaldo)
-        console.log("LRCLIB no encontró tiempos, consultando Navidrome...");
-        const rawLyrics = await navidromeApi.getLyrics(track.artist, track.title);
+        // 🥈 PRIORIDAD 2: Si el NAS no tiene el archivo, buscamos en internet (LRCLIB)
+        console.log("No hay .lrc local, buscando en LRCLIB...");
+        const lrcLibLyrics = await lyricsService.getLyricsFromLRCLIB(track.artist, track.title);
         
-        if (rawLyrics) {
-          const parsed = parseLrc(rawLyrics);
-          if (parsed.length > 0) {
-            setLyrics(parsed);
-          } else {
-            setStaticLyrics(rawLyrics);
-          }
+        if (lrcLibLyrics.length > 0) {
+            console.log("Letras obtenidas de LRCLIB.");
+            setLyrics(lrcLibLyrics);
+            setIsLoading(false);
+            return;
         }
+
+        // 🥉 PRIORIDAD 3: Textos estáticos (sin sincronizar)
+        console.log("No hay letras sincronizadas, buscando estáticas...");
+        if (nasLyrics.staticText) {
+            setStaticLyrics(nasLyrics.staticText);
+        } else {
+            const oldStatic = await lyricsService.getOldStaticLyrics(track.artist, track.title);
+            setStaticLyrics(oldStatic);
+        }
+
       } catch (error) {
-        console.log("Error al cargar letras", error);
+        console.log("Error en el flujo de carga de letras", error);
       } finally {
         setIsLoading(false);
       }
@@ -75,27 +82,23 @@ export default function TrackLyrics() {
 
   const activeIndex = getActiveIndex();
 
-  // 🎬 MOTOR DE CINEMÁTICA (AUTO-SCROLL)
   useEffect(() => {
-    if (activeIndex !== -1 && scrollViewRef.current) {
-      const LINE_HEIGHT = 45; 
-      
-      // CAMBIO MATEMÁTICO:
-      // En lugar de restar 150 estáticos, calculamos el punto dulce.
-      // Al tener un colchón arriba, la coordenada Y inicial cambia para que la 
-      // línea activa siempre quede perfectamente centrada a la vista.
-      const offsetY = activeIndex * LINE_HEIGHT; 
-      
-      scrollViewRef.current.scrollTo({
-        y: offsetY, 
-        animated: true, 
-      });
+    if (activeIndex !== -1 && flatListRef.current && lyrics.length > 0) {
+      try {
+        flatListRef.current.scrollToIndex({
+          index: activeIndex, 
+          animated: true, 
+          viewPosition: 0.5,
+        });
+      } catch (e) {
+        // FlatList tira error inofensivo si intentas scrollear a un item no renderizado
+      }
     }
-  }, [activeIndex]);
+  }, [activeIndex, lyrics.length]);
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color={colors.light} />
       </View>
     );
@@ -103,46 +106,45 @@ export default function TrackLyrics() {
 
   if (lyrics.length === 0 && !staticLyrics) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.inactiveText}>No hay letras disponibles</Text>
       </View>
     );
   }
 
-return (
-    <ScrollView 
-      ref={scrollViewRef} 
+  return (
+    <FlatList
+      ref={flatListRef}
+      data={lyrics}
+      keyExtractor={(item) => item.id}
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      // Cambiamos a contentContainerStyle para inyectar los espacios vacíos
-      contentContainerStyle={styles.scrollContent}
-    >
-      {/* 🌤️ ESPACIADOR SUPERIOR: Empuja la primera línea al centro/mitad de la pantalla */}
-      <View style={{ height: 220 }} /> 
-
-      {lyrics.length > 0 ? (
-        lyrics.map((line, index) => {
-          const isActive = index === activeIndex;
-          return (
-            <Text 
-              key={line.id} 
-              style={[
-                styles.lyricText, 
-                isActive ? styles.activeText : styles.inactiveText
-              ]}
-            >
-              {line.text}
-            </Text>
-          );
-        })
-      ) : (
-        <Text style={[styles.lyricText, styles.activeText, { textAlign: 'center' }]}>
-          {staticLyrics}
-        </Text>
-      )}
-
-      {/* 🕳️ ESPACIADOR INFERIOR: Le da carril al scroll para subir las últimas líneas */}
-      <View style={{ height: 350 }} />
-    </ScrollView>
+      contentContainerStyle={styles.scrollContent} // 🚀 TOTALMENTE LIMPIO
+      fadingEdgeLength={50}
+      onScrollToIndexFailed={(info) => {
+        const wait = new Promise(resolve => setTimeout(resolve, 500));
+        wait.then(() => {
+          flatListRef.current?.scrollToIndex({ index: info.index, animated: true, viewPosition: 0.5 });
+        });
+      }}
+      renderItem={({ item, index }) => {
+        const isActive = index === activeIndex;
+        return (
+          <Text 
+            style={[
+              styles.lyricText, 
+              isActive ? styles.activeText : styles.inactiveText
+            ]}
+          >
+            {item.text}
+          </Text>
+        );
+      }}
+      ListEmptyComponent={
+        staticLyrics ? (
+          <Text style={[styles.lyricText, styles.activeText]}>{staticLyrics}</Text>
+        ) : null
+      }
+    />
   );
 }
