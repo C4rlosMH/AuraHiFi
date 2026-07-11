@@ -20,4 +20,22 @@ export const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 8,
     },
+    repeatButton: {
+        position: 'relative',
+    },
+    repeatBadge: {
+        position: 'absolute',
+        top: -2,
+        right: -4,
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    repeatBadgeText: {
+        fontSize: 9,
+        fontWeight: 'bold',
+    },
 });

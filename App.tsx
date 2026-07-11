@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
@@ -31,7 +31,7 @@ export default function App() {
         }
     });
 
-    useEffect(() => {
+    /* useEffect(() => {
         async function initialize() {
             await setupTrackPlayer();
             setIsLoading(false);
@@ -41,6 +41,24 @@ export default function App() {
             }).catch(err => console.error(err));
         }
         initialize();
+    }, []); */
+
+    useEffect(() => {
+        async function initialize() {
+            // await setupTrackPlayer(); // (Descomentar cuando lo tengas)
+            setIsLoading(false);
+        }
+        initialize();
+
+        // 🚀 NUEVO: Escuchador global para abrir el reproductor desde cualquier parte
+        const subscription = DeviceEventEmitter.addListener('expandPlayer', () => {
+            setIsFullPlayerVisible(true);
+        });
+
+        // Limpiamos el escuchador si la app se destruye
+        return () => {
+            subscription.remove();
+        };
     }, []);
 
     if (isLoading) {

@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, TouchableOpacity, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import TrackPlayer, { RepeatMode } from 'react-native-track-player';
 import { styles } from './ReproductionControls.styles';
 import { colors } from '../../../styles/theme';
@@ -13,43 +13,44 @@ interface ReproductionControlsProps {
     onCycleRepeat: () => void;
 }
 
-export default function ReproductionControls({ 
-    isPlaying, shuffleOn, onToggleShuffle, repeatState, onCycleRepeat 
+const ACTIVE_REPEAT_COLOR = colors.light;
+
+export default function ReproductionControls({
+    isPlaying, shuffleOn, onToggleShuffle, repeatState, onCycleRepeat
 }: ReproductionControlsProps) {
 
-    const getRepeatIconColor = () => {
-        if (repeatState === RepeatMode.Queue || repeatState === RepeatMode.Track) return '#00ffcc';
-        return colors.textMuted;
-    };
-
-    const getRepeatIconName = () => {
-        if (repeatState === RepeatMode.Track) return 'repeat-one';
-        return 'repeat';
-    };
+    const isRepeatActive = repeatState === RepeatMode.Queue || repeatState === RepeatMode.Track;
+    const isRepeatOne = repeatState === RepeatMode.Track;
+    const repeatColor = isRepeatActive ? ACTIVE_REPEAT_COLOR : colors.textMuted;
 
     return (
         <View style={styles.controlsRow}>
             <TouchableOpacity onPress={onToggleShuffle}>
-                <MaterialIcons name="shuffle" size={28} color={shuffleOn ? colors.light : colors.textMuted} />
+                <Ionicons name="shuffle" size={28} color={shuffleOn ? colors.light : colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => TrackPlayer.skipToPrevious()}>
-                <MaterialIcons name="skip-previous" size={38} color={colors.primary} />
+                <Ionicons name="play-skip-back" size={38} color={colors.primary} />
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={styles.playCircle}
-                onPress={() => isPlaying ? TrackPlayer.pause() : TrackPlayer.play()}
+                onPress={() => (isPlaying ? TrackPlayer.pause() : TrackPlayer.play())}
             >
-                <MaterialIcons name={isPlaying ? "pause" : "play-arrow"} size={42} color={colors.black} />
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={42} color={colors.background} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => TrackPlayer.skipToNext()}>
-                <MaterialIcons name="skip-next" size={38} color={colors.primary} />
+                <Ionicons name="play-skip-forward" size={38} color={colors.primary} />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={onCycleRepeat}>
-                <MaterialIcons name={getRepeatIconName()} size={28} color={colors.light} />
+            <TouchableOpacity onPress={onCycleRepeat} style={styles.repeatButton}>
+                <Ionicons name="repeat" size={28} color={repeatColor} />
+                {isRepeatOne && (
+                    <View style={styles.repeatBadge}>
+                        <Text style={[styles.repeatBadgeText, { color: repeatColor }]}>1</Text>
+                    </View>
+                )}
             </TouchableOpacity>
         </View>
     );

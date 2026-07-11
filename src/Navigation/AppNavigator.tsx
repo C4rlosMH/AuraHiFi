@@ -3,9 +3,11 @@ import { View, Text } from 'react-native';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons, MaterialCommunityIcons, Octicons} from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 
 import { colors } from '../styles/theme';
+
 
 
 // --- PANTALLAS REALES ---
@@ -14,10 +16,15 @@ import LibraryScreen from '../screens/Library/LibraryScreen';
 import CollectionDetailScreen from '../screens/CollactionDetailScreen/CollectionDetailScreen'; 
 import ArtistDetailScreen from '../screens/ArtistDetail/ArtistDetailScreen';
 import MathResultScreen from '../screens/MathResult/MathResultScreen';
+import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 
 
 // --- Estilos ---
 import { styles } from './AppNavigator.styles';
+
+
+type IoniconName = ComponentProps<typeof Ionicons>['name'];
+let iconName: IoniconName = 'ellipse';
 
 const SearchScreen = () => (
     <View style={styles.screenContainer}>
@@ -33,6 +40,15 @@ const CommandScreen = () => (
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+function HomeStackNavigator() {
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="HomeMain" component={HomeScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        </Stack.Navigator>
+    );
+}
 
 // 🚀 1. CREAMOS UN STACK EXCLUSIVO PARA LA BIBLIOTECA
 // Esto permite navegar profundo sin perder las pestañas ni el MiniPlayer
@@ -59,18 +75,29 @@ export default function AppNavigator() {
                 tabBarActiveTintColor: colors.light, // 🚀 Usamos el blanco del tema
                 tabBarInactiveTintColor: colors.textMuted, // 🚀 Usamos el texto muteado del tema
                 tabBarIcon: ({ focused, color, size }) => {
-                    let iconName = 'ellipse';
+                    // Home usa Octicons (return temprano)
+                    if (route.name === 'Home') {
+                        return (
+                            <Octicons
+                                name={focused ? 'home-fill' : 'home'}
+                                size={size}
+                                color={color}
+                            />
+                        );
+                    }
 
-                    if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-                    else if (route.name === 'Search') iconName = focused ? 'search' : 'search-outline';
-                    else if (route.name === 'Library') iconName = focused ? 'library' : 'library-outline';
-                    else if (route.name === 'Command') iconName = focused ? 'server' : 'server-outline'; 
+                    // El resto usa Ionicons
+                    let iconName: IoniconName = 'ellipse';
+
+                    if (route.name === 'Search') iconName = focused ? 'search' : 'search-outline';
+                    else if (route.name === 'Library') iconName = focused ? 'albums' : 'albums-outline';
+                    else if (route.name === 'Command') iconName = focused ? 'server' : 'server-outline';
 
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Inicio' }} />
+            <Tab.Screen name="Home" component={HomeStackNavigator} options={{ title: 'Inicio' }} />
             <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Buscar' }} />
             
             {/* AQUÍ INYECTAMOS EL STACK EN LUGAR DE LA PANTALLA SOLA */}
