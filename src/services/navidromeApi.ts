@@ -309,12 +309,15 @@ export const navidromeApi = {
             year: album.year,
             songCount: album.songCount,
             totalDuration: album.duration,
+            // AGREGAMOS ESTA LINEA PARA EXPORTAR EL ESTADO DEL LIKE
+            starred: album.starred !== undefined,
             tracks: (album.song || []).map((song: any) => ({
                 id: song.id,
                 title: song.title,
                 artist: song.artist,
                 album: song.album,
                 duration: song.duration,
+                starred: song.starred !== undefined,
                 artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
                 url: buildUrl('stream', { id: song.id })
             }))
@@ -335,21 +338,35 @@ export const navidromeApi = {
             coverArtUrl: buildUrl('getCoverArt', { id: playlist.coverArt || playlist.id, size: 500 }),
             songCount: playlist.songCount,
             totalDuration: playlist.duration,
+            // AGREGAMOS ESTA LINEA
+            starred: playlist.starred !== undefined,
             tracks: (playlist.entry || []).map((song: any) => ({
                 id: song.id,
                 title: song.title,
                 artist: song.artist,
                 album: song.album,
                 duration: song.duration,
+                starred: song.starred !== undefined,
                 artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
                 url: buildUrl('stream', { id: song.id })
             }))
         };
     },
 
-    toggleStar: async (id: string, isStarred: boolean) => {
+    toggleStar: async (id: string, isStarred: boolean, type: 'track' | 'album' | 'artist' = 'track') => {
         const endpoint = isStarred ? 'unstar' : 'star';
-        const url = buildUrl(endpoint, { id });
+        
+        // 🚀 Construimos el parámetro correcto según lo que estemos guardando
+        const params: Record<string, string> = {};
+        if (type === 'album') {
+            params.albumId = id;
+        } else if (type === 'artist') {
+            params.artistId = id;
+        } else {
+            params.id = id; // Por defecto (canciones) usa 'id'
+        }
+        
+        const url = buildUrl(endpoint, params);
         await fetchFromNavidrome(url);
         return !isStarred; 
     },

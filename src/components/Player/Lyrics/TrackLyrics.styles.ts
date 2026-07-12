@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 32,
         paddingBottom: '15%',
-        //paddingTop: '0%'
+        paddingTop: '5%'
     },
     lyricText: {
         fontSize: 30,

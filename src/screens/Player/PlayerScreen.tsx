@@ -112,13 +112,21 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                 title: activeTrack.title || 'Desconocido',
                 artist: activeTrack.artist || 'Artista Desconocido',
                 artwork: activeTrack.artwork || '',
-                //streamUrl: activeTrack.url || '' // 🚀 Rescatamos la URL original
+                //streamUrl: activeTrack.url || '' 
             });
+
+            // 🚀 DOBLE VERIFICACIÓN (NAS + LOCAL)
+            const serverLikedStatus = activeTrack.starred === true || activeTrack.starred === 'true';
             
-            // 🚀 NUEVO: Consultamos nuestra base de datos local
-            if (activeTrack.id) {
-                localLibraryService.isTrackFavorited(activeTrack.id).then(setIsLiked);
+            if (!serverLikedStatus && activeTrack.id) {
+                localLibraryService.isTrackFavorited(activeTrack.id).then((isLocalFav) => {
+                    setIsLiked(isLocalFav);
+                });
+            } else {
+                // Si el servidor dijo que sí, le creemos ciegamente y prendemos el corazón
+                setIsLiked(serverLikedStatus);
             }
+
         } else {
             setTrackInfo(null);
         }

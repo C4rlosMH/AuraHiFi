@@ -154,9 +154,10 @@ export default function HomeScreen() {
                         onNext={() => playerService.next()}
                         onPrev={() => playerService.previous()}
                         // 🚀 3A. NAVEGACIÓN A PLAYLISTS (Navegación Anidada hacia Library)
-                        onPlaylistPress={(id) => navigation.navigate('Library', { 
-                            screen: 'CollectionDetail', 
-                            params: { id: id, title: 'Mix' } 
+                        onPlaylistPress={(id) => navigation.navigate('CollectionDetail', { 
+                            id: id, 
+                            title: 'Mix', 
+                            type: 'playlist' 
                         })}
                         // 🚀 3B. NAVEGACIÓN AL REPRODUCTOR PRINCIPAL
                         onResumeCardPress={() => DeviceEventEmitter.emit('expandPlayer')}
@@ -172,10 +173,11 @@ export default function HomeScreen() {
                                     subtitle={item.artist} 
                                     imageUrl={item.coverArtUrl} 
                                     // 🚀 3C. NAVEGACIÓN A ÁLBUMES
-                                    onPress={() => navigation.navigate('Library', { 
-                                        screen: 'CollectionDetail', 
-                                        params: { id: item.id, title: item.title } 
-                                    })} 
+                                    onPress={() => navigation.navigate('CollectionDetail', { 
+                                        id: item.id, 
+                                        title: item.title, 
+                                        type: 'album' 
+                                    })}
                                 />
                             ))}
                         </HorizontalSection>
@@ -210,10 +212,10 @@ export default function HomeScreen() {
                                     artistName={item.name} 
                                     imageUrl={item.artistImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=random`} 
                                     // 🚀 3E. NAVEGACIÓN A ARTISTAS
-                                    onPress={() => navigation.navigate('Library', { 
-                                        screen: 'ArtistDetail', 
-                                        params: { id: item.id, name: item.name } 
-                                    })} 
+                                    onPress={() => navigation.navigate('ArtistDetail', { 
+                                        id: item.id, 
+                                        name: item.name 
+                                    })}
                                 />
                             ))}
                         </HorizontalSection>

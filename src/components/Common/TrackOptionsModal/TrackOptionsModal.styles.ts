@@ -14,11 +14,11 @@ export const styles = StyleSheet.create({
         backgroundColor: colors.reemplazo,
         
         // Adaptamos la caja para que se pegue al fondo de la pantalla como un BottomSheet
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        borderBottomLeftRadius: 0, 
-        borderBottomRightRadius: 0,
-        borderBottomWidth: 0, 
+        //borderTopLeftRadius: 24,
+        //borderTopRightRadius: 24,
+        //borderBottomLeftRadius: 0, 
+        //borderBottomRightRadius: 0,
+        //borderBottomWidth: 0, 
         
         paddingTop: 10,
         paddingHorizontal: 20,

@@ -5,7 +5,12 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Track } from '../../../services/navidromeApi';
 import { playerService } from '../../../services/PlayerService';
+import { downloadManager } from '../../../services/downloadManager';
+import { PlaylistManagerService } from '../../../services/PlaylistManagerService';
+import { localLibraryService } from '../../../services/LocalLibraryService';
 import { styles } from './TrackOptionsModal.styles';
+
+//import AddToPlaylistModal from '../AddToPlaylistModal/AddToPlaylistModal';
 
 interface TrackOptionsModalProps {
     isVisible: boolean;
@@ -14,6 +19,7 @@ interface TrackOptionsModalProps {
     isFromPlaylist?: boolean; 
     isFromAlbum?: boolean;
     onRemoveFromPlaylist?: (trackId: string) => void;
+    onAddToPlaylist?: (trackId: string) => void; // 🚀 Nueva prop para el futuro selector
 }
 
 export default function TrackOptionsModal({ 
@@ -22,21 +28,30 @@ export default function TrackOptionsModal({
     onClose, 
     isFromPlaylist = false,
     isFromAlbum = false,
-    onRemoveFromPlaylist 
+    onRemoveFromPlaylist,
+    onAddToPlaylist 
 }: TrackOptionsModalProps) {
     const navigation = useNavigation<any>();
-
     const [isStarred, setIsStarred] = useState(false);
+    //const [isPlaylistModalVisible, setIsPlaylistModalVisible] = useState(false);
 
     useEffect(() => {
         if (track) {
-            setIsStarred(track.starred || false);
+            // 1. Le creemos al servidor primero
+            const serverState = track.starred || false;
+            setIsStarred(serverState);
+            
+            // 2. 🚀 Verificamos en la base local para que no haya margen de error
+            localLibraryService.isTrackFavorited(track.id).then((isLocalFav) => {
+                if (isLocalFav || serverState) {
+                    setIsStarred(true);
+                }
+            });
         }
     }, [track]);
 
     if (!track) return null;
 
-    // 🚀 CAZADOR DE IMÁGENES: Busca la portada en todas las posibles propiedades del objeto
     const displayImage = track.coverArtUrl || (track as any).artwork || (track as any).imageUrl;
 
     const handlePlayNext = async () => {
@@ -47,7 +62,6 @@ export default function TrackOptionsModal({
             console.error("Error al añadir a continuación:", error);
         }
     };
-
 
     const handleAddToQueue = async () => {
         try {
@@ -60,44 +74,51 @@ export default function TrackOptionsModal({
 
     const handleGoToArtist = () => {
         onClose();
-        if (track.artist) {
-            navigation.navigate('ArtistDetail', { id: track.artist, name: track.artist });
+        // 🚀 CORRECCIÓN: Buscamos el ID real, si no existe, mandamos el nombre para la "Búsqueda Fantasma"
+        const artistId = (track as any).artistId || track.artist;
+        if (artistId) {
+            navigation.navigate('ArtistDetail', { id: artistId, name: track.artist });
         } else {
-            Alert.alert("Aviso", "No se encontró el ID del artista.");
+            Alert.alert("Aviso", "No se encontró información del artista.");
         }
     };
 
     const handleGoToAlbum = () => {
         onClose();
-        if (track.album) {
-            navigation.navigate('CollectionDetail', { id: track.album, type: 'album', title: track.album });
+        // 🚀 CORRECCIÓN: Obligamos a usar el ID real del álbum
+        const albumId = (track as any).albumId;
+        if (albumId) {
+            navigation.navigate('CollectionDetail', { id: albumId, type: 'album', title: track.album });
         } else {
-             Alert.alert("Aviso", "No se encontró el ID del álbum.");
+             Alert.alert("Aviso", "Esta pista no tiene un álbum asociado.");
         }
     };
 
     const handleToggleFavorite = async () => {
-        // UI Optimista: Cambiamos la interfaz instantáneamente para que el usuario lo sienta rápido
         const newState = !isStarred;
-        setIsStarred(newState);
+        setIsStarred(newState); // UI Optimista
         
         try {
+            // Sincronizamos NAS + Local (igual que en el reproductor)
             await playerService.toggleFavoriteServer(track.id);
-            // Nota: No cerramos el modal aquí para que el usuario disfrute ver cómo se enciende el corazón.
+            await localLibraryService.handleTrackLike(track as any);
         } catch (error) {
-            // Si el servidor falla, revertimos el botón
             setIsStarred(!newState);
-            Alert.alert("Error de red", "No se pudo sincronizar el favorito con Navidrome.");
+            Alert.alert("Error de red", "No se pudo sincronizar el favorito.");
         }
     };
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         onClose();
-        Alert.alert(
-            "Descarga Iniciada", 
-            `Descargando "${track.title}" en formato FLAC para escucha offline...`
-        );
-        // TODO: Aquí conectaremos expo-file-system en el Backlog Punto 6
+        try {
+            // 🚀 NUEVO: Conectado a tus managers reales
+            const localUri = await downloadManager.downloadTrack(track.streamUrl, track.title, track.artist);
+            await localLibraryService.registerDownload(track as any, localUri);
+            Alert.alert("Descarga Completada", `"${track.title}" se guardó offline.`);
+        } catch (error) {
+            console.error("Error descargando pista:", error);
+            Alert.alert("Error", "No se pudo descargar la canción.");
+        }
     };
 
     return (
@@ -139,21 +160,22 @@ export default function TrackOptionsModal({
 
                             <TouchableOpacity style={styles.optionRow} onPress={handleAddToQueue}>
                                 <Ionicons name="list-circle-outline" size={24} style={styles.optionIcon} />
-                                <Text style={styles.optionText}>Añadir al final de la cola</Text>
+                                <Text style={styles.optionText}>Añadir a la fila</Text>
                             </TouchableOpacity>
 
-                            {/* 🚀 NUEVO: Botón de Descarga */}
                             <TouchableOpacity style={styles.optionRow} onPress={handleDownload}>
                                 <Ionicons name="download-outline" size={24} style={styles.optionIcon} />
                                 <Text style={styles.optionText}>Descargar</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.optionRow} onPress={() => { console.log("Añadir a playlist"); onClose(); }}>
-                                <Ionicons name="add-circle-outline" size={24} style={styles.optionIcon} />
-                                <Text style={styles.optionText}>Añadir a una playlist</Text>
+                            <TouchableOpacity style={styles.optionRow} onPress={() => {
+                                onClose();
+                                onAddToPlaylist?.(track.id);
+                                }}>
+                                    <Ionicons name="add-circle-outline" size={24} style={styles.optionIcon} />
+                                    <Text style={styles.optionText}>Añadir a una playlist</Text>
                             </TouchableOpacity>
 
-                            {/* 🚀 LÓGICA CONDICIONAL: Oculta el botón si ya estás en la vista del álbum */}
                             {!isFromAlbum && (
                                 <TouchableOpacity style={styles.optionRow} onPress={handleGoToAlbum}>
                                     <Ionicons name="disc-outline" size={24} style={styles.optionIcon} />
@@ -166,7 +188,6 @@ export default function TrackOptionsModal({
                                 <Text style={styles.optionText}>Ir al artista</Text>
                             </TouchableOpacity>
 
-                            {/* 🚀 BOTÓN FAVORITO REACTIVO */}
                             <TouchableOpacity style={styles.optionRow} onPress={handleToggleFavorite}>
                                 <Ionicons 
                                     name={isStarred ? "heart" : "heart-outline"} 

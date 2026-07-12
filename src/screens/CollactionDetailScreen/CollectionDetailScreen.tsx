@@ -64,7 +64,7 @@ export default function CollectionDetailScreen() {
         try {
             setIsLoading(true);
 
-            // 1. INTERCEPTOR LOCAL: Si es una carpeta offline, leemos de AsyncStorage
+            // 1. INTERCEPTOR LOCAL: Si es una carpeta offline
             if (type === 'local_folder') {
                 const tracks = id === 'fav_folder'
                     ? await localLibraryService.getFavoritedTracks()
@@ -74,26 +74,48 @@ export default function CollectionDetailScreen() {
                     id: id,
                     title: id === 'fav_folder' ? 'Tus Favoritos' : 'Descargas Locales',
                     artist: 'Aura Hi-Fi',
-                    coverArtUrl: tracks.length > 0 ? tracks[0].coverArtUrl : '', // Usamos la primera pista como portada
+                    coverArtUrl: tracks.length > 0 ? tracks[0].coverArtUrl : '', 
                     tracks: tracks
                 });
                 
                 setIsPinned(false);
                 setIsDownloaded(true);
+                setIsLiked(id === 'fav_folder'); 
                 setIsLoading(false);
-                return; // Cortamos la ejecucion para no consultar al NAS
+                return;
             }
 
-            // 2. FLUJO NORMAL: Cargamos la info del NAS dependiendo de si es album o playlist
+            // 2. FLUJO NORMAL: Cargamos la info del NAS
             const data = type === 'album' 
                 ? await navidromeApi.getAlbumDetails(id)
                 : await navidromeApi.getPlaylistDetails(id);
             
             setDetails(data);
 
-            // Verificamos si ya esta guardado en el PinService local
+            // 3. HIDRATACION DE ESTADOS
+            
+            // A. Verificamos el Like
+            setIsLiked(!!data.starred);
+
+            // B. Verificamos el Pin
             const pinnedStatus = await pinService.isPinned(id);
             setIsPinned(pinnedStatus);
+
+            // C. Verificamos si esta descargado usando tu downloadManager
+            if (data.tracks && data.tracks.length > 0) {
+                const firstTrack = data.tracks[0];
+                
+                // Evaluamos si es album (tiene artist) o playlist (tiene owner) para evitar el error de TypeScript
+                const fallbackArtist = type === 'album' ? (data as any).artist : (data as any).owner;
+                const trackArtist = firstTrack.artist || fallbackArtist || "Aura Hi-Fi";
+                
+                const filename = downloadManager.getSafeFilename(firstTrack.title, trackArtist);
+                const localUri = await downloadManager.getLocalUriIfExists(filename);
+                
+                setIsDownloaded(!!localUri); 
+            } else {
+                setIsDownloaded(false);
+            }
             
         } catch (error) {
             console.error("Error cargando detalles:", error);
@@ -132,10 +154,15 @@ export default function CollectionDetailScreen() {
     };
 
     const handleToggleLike = async () => {
-        // Aún falta implementar el método toggleStar en NavidromeAPI, 
-        // pero dejamos la lógica lista.
+        // Navidrome (Subsonic) no tiene soporte nativo para dar like a Playlists
+        if (type === 'playlist') {
+            Alert.alert("Aviso", "Navidrome no permite guardar playlists enteras en favoritos, solo álbumes o canciones.");
+            return;
+        }
+
         try {
-            const newState = await navidromeApi.toggleStar(id, isLiked);
+            // 🚀 Le indicamos explícitamente a la API que es un 'album'
+            const newState = await navidromeApi.toggleStar(id, isLiked, 'album');
             setIsLiked(newState);
         } catch (error) {
             console.log("Toggle Star falló", error);
@@ -304,6 +331,13 @@ export default function CollectionDetailScreen() {
                         tracks={filteredTracks} 
                         onPlayTrack={handlePlayTrack} 
                         showCovers={isPlaylist}
+                        // 🚀 AQUÍ LE DECIMOS QUE SÍ ESTAMOS EN UNA PLAYLIST
+                        isFromPlaylist={isPlaylist}
+                        // 🚀 PREPARAMOS LA FUNCIÓN DE BORRADO (La lógica real la haremos después)
+                        onRemoveFromPlaylist={(trackId) => {
+                            console.log("Eliminar pista:", trackId);
+                            // TODO: Conectar con navidromeApi para borrar
+                        }}
                     />
 
                 </ScrollView>

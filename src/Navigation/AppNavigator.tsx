@@ -46,6 +46,8 @@ function HomeStackNavigator() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="HomeMain" component={HomeScreen} />
             <Stack.Screen name="Notifications" component={NotificationsScreen} />
+            <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
+            <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} />
         </Stack.Navigator>
     );
 }

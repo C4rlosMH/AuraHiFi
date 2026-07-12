@@ -8,6 +8,8 @@ import { playerService } from '../../../services/PlayerService';
 import { styles } from './CollectionTrackList.styles';
 
 import TrackOptionsModal from '../../Common/TrackOptionsModal/TrackOptionsModal';
+import AddToPlaylistModal from '../../Common/AddToPlaylistModal/AddToPlaylistModal';
+
 
 interface CollectionTrackListProps {
     tracks: Track[];
@@ -21,6 +23,9 @@ export default function CollectionTrackList({ tracks, onPlayTrack, isFromPlaylis
     
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+
+    const [isPlaylistModalVisible, setIsPlaylistModalVisible] = useState(false);
+    const [playlistTrackId, setPlaylistTrackId] = useState<string | null>(null);
 
     // Almacenamiento de referencias para el autocierre del swipe
     const swipeableRefs = useRef<Map<string, any>>(new Map());
@@ -45,6 +50,13 @@ export default function CollectionTrackList({ tracks, onPlayTrack, isFromPlaylis
     const handleOpenOptions = (track: Track) => {
         setSelectedTrack(track);
         setIsModalVisible(true);
+    };
+
+    const handleAddToPlaylist = (trackId: string) => {
+        setPlaylistTrackId(trackId);
+        setTimeout(() => {
+            setIsPlaylistModalVisible(true);
+        }, 300);
     };
 
     const renderLeftActions = (progress: any, dragX: any) => {
@@ -108,12 +120,19 @@ export default function CollectionTrackList({ tracks, onPlayTrack, isFromPlaylis
                 isVisible={isModalVisible}
                 track={selectedTrack}
                 isFromPlaylist={isFromPlaylist}
-                isFromAlbum={true} // <--- Así de sencillo le avisas
+                // 🚀 Si NO es una playlist, asumimos que es un álbum
+                isFromAlbum={!isFromPlaylist} 
                 onRemoveFromPlaylist={onRemoveFromPlaylist}
+                 onAddToPlaylist={handleAddToPlaylist}
                 onClose={() => {
                     setIsModalVisible(false);
                     setSelectedTrack(null);
                 }}
+            />
+            <AddToPlaylistModal 
+                isVisible={isPlaylistModalVisible}
+                trackId={playlistTrackId}
+                onClose={() => setIsPlaylistModalVisible(false)}
             />
         </GestureHandlerRootView>
     );
