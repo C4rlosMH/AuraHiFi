@@ -64,8 +64,8 @@ export default function PlayerBackground({ artwork }: PlayerBackgroundProps) {
             >
                 <Image 
                     source={{ uri: artwork }}
-                    style={{ width: height * 1.5, height: height * 1.5 }} 
-                    blurRadius={3} 
+                    style={{ width: height * 0.70, height: height * 0.70 }} 
+                    blurRadius={5} 
                     resizeMode="cover"
                 />
             </Animated.View>

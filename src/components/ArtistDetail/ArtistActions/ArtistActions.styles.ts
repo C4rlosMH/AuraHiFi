@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
         gap: 10, // Menos separación para que quepan bien a la derecha
     },
     playButton: { 
-        backgroundColor: colors.accent, 
+        backgroundColor: colors.light, 
         width: 48, // 🚀 Ajustados a 48px para armonizar dentro del panel
         height: 48,
         borderRadius: 24, 

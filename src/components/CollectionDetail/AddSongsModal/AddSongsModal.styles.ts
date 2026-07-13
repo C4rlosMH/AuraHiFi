@@ -105,5 +105,21 @@ export const styles = StyleSheet.create({
         color: colors.textMuted,
         textAlign: 'center',
         marginTop: 40,
-    }
+    },
+    searchInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        marginHorizontal: 20,
+        marginBottom: 15,
+        height: 46,
+    },
+    searchInput: {
+        flex: 1,
+        color: colors.primary,
+        fontSize: 16,
+        marginLeft: 10,
+    },
 });

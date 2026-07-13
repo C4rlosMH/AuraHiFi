@@ -104,5 +104,22 @@ export const downloadManager = {
         } catch (error) {
             console.error("Error al auditar el directorio:", error);
         }
-    }
+    },
+
+    async deleteDownloadedFile(filename: string): Promise<boolean> {
+      try {
+          const fileUri = `${AURA_AUDIO_DIR}${filename}`;
+          const fileInfo = await FileSystem.getInfoAsync(fileUri);
+          
+          if (fileInfo.exists) {
+              await FileSystem.deleteAsync(fileUri);
+              console.log(`Archivo físico eliminado: ${filename}`);
+              return true;
+          }
+          return false;
+      } catch (error) {
+          console.error("Error al intentar eliminar el archivo físico:", error);
+          return false;
+      }
+  },
 };

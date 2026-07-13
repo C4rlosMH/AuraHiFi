@@ -42,6 +42,7 @@ export interface Track {
     id: string;
     title: string;
     artist: string;
+    artistId?: string;
     album: string;
     duration: number;
     coverArtUrl: string;
@@ -305,6 +306,7 @@ export const navidromeApi = {
             id: album.id,
             title: album.name || album.title,
             artist: album.artist,
+            artistId: album.artistId,
             coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 500 }),
             year: album.year,
             songCount: album.songCount,
@@ -315,6 +317,7 @@ export const navidromeApi = {
                 id: song.id,
                 title: song.title,
                 artist: song.artist,
+                artistId: song.artistId,
                 album: song.album,
                 duration: song.duration,
                 starred: song.starred !== undefined,
@@ -386,5 +389,47 @@ export const navidromeApi = {
             coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
             streamUrl: buildUrl('stream', { id: song.id })
         }));
+    },
+    
+    getSimilarSongs: async (songId: string, limit: number = 10): Promise<Track[]> => {
+        // Usamos getSimilarSongs2 que es más preciso en Subsonic/Navidrome
+        const url = buildUrl('getSimilarSongs2', { id: songId, count: limit });
+        const response = await fetchFromNavidrome(url).catch(() => null);
+        
+        const songs = response?.['subsonic-response']?.similarSongs2?.song || [];
+        
+        // Usamos tu mapeador existente para que devuelva el formato Track correcto
+        return navidromeApi.mapSongsToTrack(songs, 'getSimilarSongs');
+    },
+    
+    updatePlaylist: async (playlistId: string, name: string) => {
+        const url = buildUrl('updatePlaylist', { playlistId, name });
+        const data = await fetchFromNavidrome(url);
+        return data['subsonic-response'].status === 'ok';
+    },
+
+    searchTracks: async (query: string, limit: number = 20): Promise<Track[]> => {
+        if (!query.trim()) return [];
+        
+        try {
+            // search3 busca en todo el servidor. Pedimos solo canciones (songCount)
+            const url = buildUrl('search3', { query, songCount: limit, albumCount: 0, artistCount: 0 });
+            const data = await fetchFromNavidrome(url);
+            
+            const songs = data['subsonic-response']?.searchResult3?.song || [];
+            
+            return songs.map((song: any) => ({
+                id: song.id,
+                title: song.title,
+                artist: song.artist,
+                album: song.album,
+                duration: song.duration,
+                coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+                streamUrl: buildUrl('stream', { id: song.id })
+            }));
+        } catch (error) {
+            console.error("Error buscando canciones:", error);
+            return [];
+        }
     },
 };

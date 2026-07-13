@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
         paddingTop: 10,
         paddingHorizontal: 20,
         paddingBottom: 40,
-        maxHeight: SCREEN_HEIGHT * 0.8,
+        maxHeight: SCREEN_HEIGHT * 0.85,
     },
     dragHandleContainer: {
         alignItems: 'center',
@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
     dragHandle: {
         width: 40,
         height: 5,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)', 
+        backgroundColor: colors.drag, 
         borderRadius: 3,
     },
     headerContainer: {

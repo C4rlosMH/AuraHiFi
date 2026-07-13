@@ -19,6 +19,8 @@ import FooterActions from '../../components/Player/FooterActions/FooterActions';
 import QueuePanel from '../../components/Player/Queue/QueuePanel';
 import TrackLyrics from '../../components/Player/Lyrics/TrackLyrics';
 import LosslessBadge from '../../components/Player/LosslessBadge/LosslessBadge';
+import TrackOptionsModal from '../../components/Common/TrackOptionsModal/TrackOptionsModal';
+import AddToPlaylistModal from '../../components/Common/AddToPlaylistModal/AddToPlaylistModal';
 
 // --- Estilos ---
 import { styles } from './PlayerScreen.styles';
@@ -46,6 +48,10 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
 
     // GESTOS Y ANIMACIONES
     const translateY = useRef(new Animated.Value(0)).current;
+
+    const [isOptionsVisible, setIsOptionsVisible] = useState(false);
+    const [isPlaylistModalVisible, setIsPlaylistModalVisible] = useState(false);
+    const [playlistTrackId, setPlaylistTrackId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isVisible) {
@@ -238,100 +244,139 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
         }
     };
 
+    const currentTrackForModal = activeTrack ? {
+        id: activeTrack.id,
+        title: activeTrack.title || 'Desconocido',
+        artist: activeTrack.artist || 'Artista Desconocido',
+        album: activeTrack.album || '',
+        duration: activeTrack.duration || 0,
+        coverArtUrl: activeTrack.artwork || '',
+        streamUrl: typeof activeTrack.url === 'string' ? activeTrack.url : '',
+        starred: isLiked 
+    } : null;
+
+    const handleAddToPlaylist = (trackId: string) => {
+        setPlaylistTrackId(trackId);
+        setTimeout(() => {
+            setIsPlaylistModalVisible(true);
+        }, 300);
+    };
+
     return (
-        <Modal visible={isVisible} animationType="slide" transparent={true} onRequestClose={onClose}>
-            {/* 🚀 SOLUCIÓN: El Animated.View ahora es el contenedor RAÍZ. Todo bajará al mismo tiempo */}
-            <Animated.View style={[styles.modalContainer, { transform: [{ translateY: translateY }] }]}>
+        <>
+            <Modal visible={isVisible} animationType="slide" transparent={true} onRequestClose={onClose}>
                 
-                {/* 🎨 El fondo ahora está DENTRO del bloque animado */}
-                <PlayerBackground artwork={trackInfo?.artwork} />
-
-                {/* El contenedor de contenido vuelve a ser un View normal */}
-                <View style={styles.content}>
+                {/* 🚀 SOLUCIÓN: El Animated.View ahora es el contenedor RAÍZ. Todo bajará al mismo tiempo */}
+                <Animated.View style={[styles.modalContainer, { transform: [{ translateY: translateY }] }]}>
                     
-                    {/* Zona limpia del Gesto del Header */}
-                    <View {...panResponder.panHandlers} style={styles.headerGestureContainer}>
-                        <PlayerHeader 
-                            onClose={onClose} 
-                            showLyrics={showLyrics}
-                            showQueue={showQueue}
-                            trackTitle={trackInfo?.title}
-                            trackArtist={trackInfo?.artist}
-                            artwork={trackInfo?.artwork}
-                        />
-                    </View>
+                    {/* 🎨 El fondo ahora está DENTRO del bloque animado */}
+                    <PlayerBackground artwork={trackInfo?.artwork} />
 
-                    {/* Vistas Centrales Dinámicas */}
-                    {showQueue ? (
-                        <View style={styles.queueListContainer}>
-                            <QueuePanel 
-                                queue={currentQueue} 
-                                isPlaying={isPlaying}
-                                onSelectTrack={async (index) => {
-                                    try {
-                                        await TrackPlayer.skip(index);
-                                        await TrackPlayer.play();
-                                    } catch (error) {
-                                        console.log("Error al saltar en la cola:", error);
-                                    }
+                    {/* El contenedor de contenido vuelve a ser un View normal */}
+                    <View style={styles.content}>
+                        
+                        {/* Zona limpia del Gesto del Header */}
+                        <View {...panResponder.panHandlers} style={styles.headerGestureContainer}>
+                            <PlayerHeader 
+                                onClose={onClose} 
+                                showLyrics={showLyrics}
+                                showQueue={showQueue}
+                                trackTitle={trackInfo?.title}
+                                trackArtist={trackInfo?.artist}
+                                artwork={trackInfo?.artwork}
+                                // 🚀 CONECTAMOS EL BOTON AQUI
+                                onOpenOptions={() => setIsOptionsVisible(true)}
+                                onCenterPress={() => {
+                                    setShowLyrics(false);
+                                    setShowQueue(false);
                                 }}
                             />
                         </View>
-                    ) : showLyrics ? (
-                        <>
-                            <View style={styles.lyricsSpacer} />
-                            <TrackLyrics /> 
-                        </>
-                    ) : (
-                        /* Zona limpia del Gesto de la Portada */
-                        <View {...panResponder.panHandlers} style={styles.artworkGestureContainer}>
-                            <AlbumArtwork artwork={trackInfo?.artwork} />
-                        </View>
-                    )}
 
-                    {(!showLyrics && !showQueue) && (
-                        <View style={styles.losslessWrapper}>
-                            <LosslessBadge />
-                        </View>
-                    )}
-
-                    {/* Panel de Controles e Información */}
-                    <GlassPanel artwork={trackInfo?.artwork}>
-                        {(!showLyrics && !showQueue) && (
-                            <TrackMetadata 
-                                title={trackInfo?.title || 'Ninguna pista activa'} 
-                                artist={trackInfo?.artist || 'Selecciona música'} 
-                                isFavorite={isLiked}
-                                onToggleFavorite={handleToggleLike}
-                            />
+                        {/* Vistas Centrales Dinámicas */}
+                        {showQueue ? (
+                            <View style={styles.queueListContainer}>
+                                <QueuePanel 
+                                    queue={currentQueue} 
+                                    isPlaying={isPlaying}
+                                    onSelectTrack={async (index) => {
+                                        try {
+                                            await TrackPlayer.skip(index);
+                                            await TrackPlayer.play();
+                                        } catch (error) {
+                                            console.log("Error al saltar en la cola:", error);
+                                        }
+                                    }}
+                                />
+                            </View>
+                        ) : showLyrics ? (
+                            <>
+                                <View style={styles.lyricsSpacer} />
+                                <TrackLyrics /> 
+                            </>
+                        ) : (
+                            /* Zona limpia del Gesto de la Portada */
+                            <View {...panResponder.panHandlers} style={styles.artworkGestureContainer}>
+                                <AlbumArtwork artwork={trackInfo?.artwork} />
+                            </View>
                         )}
-                        
-                        <ScrubberBar />
-                        
-                        <ReproductionControls 
-                            isPlaying={isPlaying}
-                            shuffleOn={shuffleOn}
-                            onToggleShuffle={handleToggleShuffle}
-                            repeatState={repeatState}
-                            onCycleRepeat={handleCycleRepeat}
-                        />
-                    </GlassPanel>
 
-                    {/* Footer */}
-                    <FooterActions 
-                        showQueue={showQueue}
-                        showLyrics={showLyrics}
-                        onToggleQueue={() => {
-                            setShowQueue(!showQueue);
-                            if (showLyrics) setShowLyrics(false);
-                        }}
-                        onOpenLyrics={() => {
-                            setShowLyrics(!showLyrics);
-                            if (showQueue) setShowQueue(false);
-                        }}
-                    />
-                </View>
-            </Animated.View>
-        </Modal>
+                        {(!showLyrics && !showQueue) && (
+                            <View style={styles.losslessWrapper}>
+                                <LosslessBadge />
+                            </View>
+                        )}
+
+                        {/* Panel de Controles e Información */}
+                        <GlassPanel artwork={trackInfo?.artwork}>
+                            {(!showLyrics && !showQueue) && (
+                                <TrackMetadata 
+                                    title={trackInfo?.title || 'Ninguna pista activa'} 
+                                    artist={trackInfo?.artist || 'Selecciona música'} 
+                                    isFavorite={isLiked}
+                                    onToggleFavorite={handleToggleLike}
+                                />
+                            )}
+                            
+                            <ScrubberBar />
+                            
+                            <ReproductionControls 
+                                isPlaying={isPlaying}
+                                shuffleOn={shuffleOn}
+                                onToggleShuffle={handleToggleShuffle}
+                                repeatState={repeatState}
+                                onCycleRepeat={handleCycleRepeat}
+                            />
+                        </GlassPanel>
+
+                        {/* Footer */}
+                        <FooterActions 
+                            showQueue={showQueue}
+                            showLyrics={showLyrics}
+                            onToggleQueue={() => {
+                                setShowQueue(!showQueue);
+                                if (showLyrics) setShowLyrics(false);
+                            }}
+                            onOpenLyrics={() => {
+                                setShowLyrics(!showLyrics);
+                                if (showQueue) setShowQueue(false);
+                            }}
+                        />
+                    </View>
+                </Animated.View>
+                
+            </Modal>
+            <TrackOptionsModal 
+                isVisible={isOptionsVisible}
+                track={currentTrackForModal as any}
+                onClose={() => setIsOptionsVisible(false)}
+                onAddToPlaylist={handleAddToPlaylist}
+            />
+            <AddToPlaylistModal 
+                isVisible={isPlaylistModalVisible}
+                trackId={playlistTrackId}
+                onClose={() => setIsPlaylistModalVisible(false)}
+            />
+        </>
     );
 }

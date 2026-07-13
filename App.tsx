@@ -80,30 +80,31 @@ export default function App() {
 
     return (
         <SafeAreaProvider>
-            <View style={{ flex: 1, backgroundColor: '#000000' }}>
-                
-                <NavigationContainer
-                    onStateChange={(state) => {
-                        const currentRoute = state?.routes[state.index]?.name;
-                        // Si en el futuro vas a 'Settings', se ocultará en automático
-                        setShowMiniPlayer(currentRoute !== 'Settings');
-                    }}
-                >
+            {/* El NavigationContainer ahora es el contenedor principal */}
+            <NavigationContainer
+                onStateChange={(state) => {
+                    const currentRoute = state?.routes[state.index]?.name;
+                    // Si en el futuro vas a 'Settings', se ocultará en automático
+                    setShowMiniPlayer(currentRoute !== 'Settings');
+                }}
+            >
+                <View style={{ flex: 1, backgroundColor: '#000000' }}>
+                    
                     <AppNavigator />
-                </NavigationContainer>
 
-                {/* COMPONENTE MODULAR INYECTADO */}
-                {showMiniPlayer && (
-                    <MiniPlayer onExpand={() => setIsFullPlayerVisible(true)} />
-                )}
+                    {/* COMPONENTE MODULAR INYECTADO */}
+                    {showMiniPlayer && (
+                        <MiniPlayer onExpand={() => setIsFullPlayerVisible(true)} />
+                    )}
 
-                <PlayerScreen 
-                    isVisible={isFullPlayerVisible} 
-                    onClose={() => setIsFullPlayerVisible(false)} 
-                    isPlaying={isPlaying} 
-                />
-                
-            </View>
+                    <PlayerScreen 
+                        isVisible={isFullPlayerVisible} 
+                        onClose={() => setIsFullPlayerVisible(false)} 
+                        isPlaying={isPlaying} 
+                    />
+                    
+                </View>
+            </NavigationContainer>
         </SafeAreaProvider>
     );
 }

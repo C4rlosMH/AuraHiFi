@@ -131,6 +131,29 @@ class LocalLibraryService {
         const library = await this.getLibrary();
         return !!library[trackId]?.isFavorited;
     }
+
+    // 5. REMOVER UNA DESCARGA MANUAL
+  public async removeDownloadedTrack(trackId: string): Promise<void> {
+      const library = await this.getLibrary();
+      const existingTrack = library[trackId];
+
+      if (existingTrack) {
+          // Apagamos el interruptor de descarga
+          existingTrack.isManuallyDownloaded = false;
+
+          // 🧹 LIMPIEZA: Si no está descargada ni tiene Like, la borramos del registro
+          if (!existingTrack.isFavorited) {
+              delete library[trackId];
+          } else {
+              // Si sigue siendo favorita (Liked), la conservamos pero vaciamos la ruta local 
+              // porque el archivo MP3 ya no existirá en el disco.
+              existingTrack.localUri = "";
+              library[trackId] = existingTrack;
+          }
+
+          await this.saveLibrary(library);
+      }
+  }
     
 }
 

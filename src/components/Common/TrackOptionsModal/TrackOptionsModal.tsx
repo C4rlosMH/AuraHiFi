@@ -3,7 +3,7 @@ import { View, Text, Modal, TouchableOpacity, Image, TouchableWithoutFeedback, A
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
-import { Track } from '../../../services/navidromeApi';
+import { Track, navidromeApi } from '../../../services/navidromeApi';
 import { playerService } from '../../../services/PlayerService';
 import { downloadManager } from '../../../services/downloadManager';
 import { PlaylistManagerService } from '../../../services/PlaylistManagerService';
@@ -121,6 +121,30 @@ export default function TrackOptionsModal({
         }
     };
 
+    const handleCreateStation = async () => {
+        onClose();
+        try {
+            // Buscamos 30 canciones similares en el servidor
+            const similarTracks = await navidromeApi.getSimilarSongs(track.id, 30);
+
+            if (similarTracks.length > 0) {
+                // Colocamos la canción actual como la número 1 de la lista
+                const stationQueue = [track, ...similarTracks];
+                
+                // Sobrescribimos la fila actual usando tu servicio existente
+                await playerService.playCollection(track, stationQueue);
+                
+                // Opcional: Mostrar una alerta de éxito
+                Alert.alert("Estación Iniciada", `Reproduciendo radio basada en "${track.title}".`);
+            } else {
+                Alert.alert("Sin resultados", "El servidor no encontró canciones similares para generar una estación.");
+            }
+        } catch (error) {
+            console.error("Error al crear estación:", error);
+            Alert.alert("Error", "No se pudo iniciar la estación de radio.");
+        }
+    };
+
     return (
         <Modal
             visible={isVisible}
@@ -161,6 +185,13 @@ export default function TrackOptionsModal({
                             <TouchableOpacity style={styles.optionRow} onPress={handleAddToQueue}>
                                 <Ionicons name="list-circle-outline" size={24} style={styles.optionIcon} />
                                 <Text style={styles.optionText}>Añadir a la fila</Text>
+
+                                
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.optionRow} onPress={handleCreateStation}>
+                                <Ionicons name="radio-outline" size={24} style={styles.optionIcon} />
+                                <Text style={styles.optionText}>Iniciar radio</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.optionRow} onPress={handleDownload}>

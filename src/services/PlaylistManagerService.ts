@@ -74,4 +74,20 @@ export class PlaylistManagerService {
       throw new Error('No se pudo actualizar la playlist en el servidor.');
     }
   }
+
+  /**
+   * Elimina una canción de una playlist existente usando su índice.
+   * @param playlistId El ID de la playlist a modificar
+   * @param songIndex El índice (posición) de la canción en la playlist (empezando en 0)
+   */
+  static async removeTrackFromPlaylist(playlistId: string, songIndex: number): Promise<void> {
+    try {
+      const url = buildUrl('updatePlaylist', { playlistId, songIndexToRemove: songIndex });
+      await fetchFromNavidrome(url);
+      console.log(`✅ Canción en el índice ${songIndex} eliminada de la playlist ${playlistId}.`);
+    } catch (error) {
+      console.error(`🚨 Error al intentar eliminar canción de la playlist ${playlistId}:`, error);
+      throw new Error('No se pudo eliminar la canción del servidor.');
+    }
+  }
 }

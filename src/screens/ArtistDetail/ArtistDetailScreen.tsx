@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, ScrollView } from 'react-native';
+import { View, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import TrackPlayer from 'react-native-track-player';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { navidromeApi, Track } from '../../services/navidromeApi';
+import { playerService } from '../../services/PlayerService';
 import { colors } from '../../styles/theme';
 import { styles } from './ArtistDetailScreen.styles';
 
@@ -14,8 +15,7 @@ import ArtistCover from '../../components/ArtistDetail/ArtistCover/ArtistCover';
 import ArtistMetadata from '../../components/ArtistDetail/ArtistMetadata/ArtistMetadata';
 import ArtistActions from '../../components/ArtistDetail/ArtistActions/ArtistActions';
 import ArtistTopTracks from '../../components/ArtistDetail/ArtistTopTracks/ArtistTopTracks';
-
-
+import CollectionOptionsModal from '../../components/Common/CollectionOptionsModal/CollectionOptionsModal';
 
 export default function ArtistDetailScreen() {
     const route = useRoute<any>();
@@ -24,6 +24,7 @@ export default function ArtistDetailScreen() {
 
     const [artistData, setArtistData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isOptionsVisible, setIsOptionsVisible] = useState(false);
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -114,7 +115,10 @@ export default function ArtistDetailScreen() {
     return (
         <AuraBackground coverUrl={artistData?.artistImageUrl}>
             <View style={styles.container}>
-                <CollectionHeader onBack={() => navigation.goBack()} />
+               <CollectionHeader 
+                    onBack={() => navigation.goBack()} 
+                    onOptions={() => setIsOptionsVisible(true)}
+                />
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                     
@@ -149,6 +153,38 @@ export default function ArtistDetailScreen() {
 
                 </ScrollView>
             </View>
+            <CollectionOptionsModal
+                isVisible={isOptionsVisible}
+                onClose={() => setIsOptionsVisible(false)}
+                title={artistData?.name || name || 'Artista'}
+                subtitle={artistData?.albumCount ? `${artistData.albumCount} álbumes` : ''}
+                coverArtUrl={artistData?.artistImageUrl}
+                type="artist"
+                
+                onCreateStation={async () => {
+                    setIsOptionsVisible(false);
+                    
+                    if (artistData?.topTracks && artistData.topTracks.length > 0) {
+                        try {
+                            const seedTrack = artistData.topTracks[0]; 
+                            let similarTracks = await navidromeApi.getSimilarSongs(seedTrack.id, 30);
+                            
+                            // 🚀 PLAN B: Rescate aleatorio
+                            if (!similarTracks || similarTracks.length === 0) {
+                                similarTracks = await navidromeApi.getRandomSongs(30);
+                            }
+                            
+                            if (similarTracks.length > 0) {
+                                const stationQueue = [seedTrack, ...similarTracks];
+                                await playerService.playCollection(seedTrack, stationQueue);
+                                Alert.alert("Estación Iniciada", `Radio de ${artistData.name} en marcha.`);
+                            }
+                        } catch (error) {
+                            Alert.alert("Error", "No se pudo iniciar la estación del artista.");
+                        }
+                    }
+                }}
+            />
         </AuraBackground>
     );
 }

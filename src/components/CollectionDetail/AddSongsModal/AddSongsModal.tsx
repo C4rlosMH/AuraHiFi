@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, TouchableWithoutFeedback, FlatList, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Modal, TouchableOpacity, FlatList, ActivityIndicator, Alert, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { navidromeApi, Track } from '../../../services/navidromeApi';
-import { localLibraryService } from '../../../services/LocalLibraryService';
 import { PlaylistManagerService } from '../../../services/PlaylistManagerService';
 import { styles } from './AddSongsModal.styles';
 import { colors } from '../../../styles/theme';
@@ -15,32 +14,50 @@ interface AddSongsModalProps {
 }
 
 export default function AddSongsModal({ isVisible, playlistId, onClose, onSuccess }: AddSongsModalProps) {
-    const [activeTab, setActiveTab] = useState<'favorites' | 'downloads'>('favorites');
+    const [searchQuery, setSearchQuery] = useState('');
     const [tracks, setTracks] = useState<Track[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Referencia para controlar el temporizador de búsqueda (Debounce)
+    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (isVisible) {
+            // Limpiamos todo al abrir el modal
+            setSearchQuery('');
+            setTracks([]);
             setSelectedIds([]);
-            fetchTracks(activeTab);
         }
-    }, [isVisible, activeTab]);
+    }, [isVisible]);
 
-    const fetchTracks = async (tab: 'favorites' | 'downloads') => {
-        setIsLoading(true);
+    // Escuchamos cada vez que el usuario escribe en el buscador
+    useEffect(() => {
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+        if (searchQuery.trim().length > 1) {
+            setIsLoading(true);
+            // Esperamos 500ms después de que deje de escribir para llamar al servidor
+            searchTimeout.current = setTimeout(() => {
+                performSearch(searchQuery);
+            }, 500);
+        } else {
+            setTracks([]);
+            setIsLoading(false);
+        }
+
+        return () => {
+            if (searchTimeout.current) clearTimeout(searchTimeout.current);
+        };
+    }, [searchQuery]);
+
+    const performSearch = async (query: string) => {
         try {
-            if (tab === 'favorites') {
-                const favs = await navidromeApi.getStarredTracks();
-                setTracks(favs);
-            } else {
-                const down = await localLibraryService.getDownloadedTracks();
-                // Omitiremos portadas locales pesadas en este modal para velocidad
-                setTracks(down.map(t => ({ id: t.id, title: t.title, artist: t.artist } as Track)));
-            }
+            const results = await navidromeApi.searchTracks(query);
+            setTracks(results);
         } catch (error) {
-            console.error("Error al cargar canciones sugeridas", error);
+            console.error("Error en búsqueda:", error);
         } finally {
             setIsLoading(false);
         }
@@ -70,7 +87,7 @@ export default function AddSongsModal({ isVisible, playlistId, onClose, onSucces
             <TouchableOpacity style={styles.trackRow} onPress={() => toggleSelection(item.id)} activeOpacity={0.7}>
                 <View style={styles.trackInfo}>
                     <Text style={styles.trackTitle} numberOfLines={1}>{item.title}</Text>
-                    <Text style={styles.trackArtist} numberOfLines={1}>{item.artist}</Text>
+                    <Text style={styles.trackArtist} numberOfLines={1}>{item.artist} • {item.album}</Text>
                 </View>
                 <Ionicons 
                     name={isSelected ? "checkmark-circle" : "ellipse-outline"} 
@@ -87,25 +104,27 @@ export default function AddSongsModal({ isVisible, playlistId, onClose, onSucces
                 <View style={styles.sheetContainer}>
                     <View style={styles.dragIndicator} />
                     
-                    <Text style={styles.headerTitle}>Añadir Canciones</Text>
+                    <Text style={styles.headerTitle}>Buscar en Navidrome</Text>
 
-                    {/* PESTAÑAS */}
-                    <View style={styles.tabContainer}>
-                        <TouchableOpacity 
-                            style={[styles.tab, activeTab === 'favorites' && styles.activeTab]} 
-                            onPress={() => setActiveTab('favorites')}
-                        >
-                            <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>Favoritos</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={[styles.tab, activeTab === 'downloads' && styles.activeTab]} 
-                            onPress={() => setActiveTab('downloads')}
-                        >
-                            <Text style={[styles.tabText, activeTab === 'downloads' && styles.activeTabText]}>Descargas</Text>
-                        </TouchableOpacity>
+                    {/* BUSCADOR GLOBAL */}
+                    <View style={styles.searchInputContainer}>
+                        <Ionicons name="search" size={20} color={colors.textMuted} />
+                        <TextInput 
+                            style={styles.searchInput}
+                            placeholder="Buscar canciones o artistas..."
+                            placeholderTextColor={colors.textMuted}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoFocus={true}
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
-                    {/* LISTA */}
+                    {/* LISTA DE RESULTADOS */}
                     {isLoading ? (
                         <View style={styles.loader}><ActivityIndicator size="large" color={colors.light} /></View>
                     ) : (
@@ -113,7 +132,11 @@ export default function AddSongsModal({ isVisible, playlistId, onClose, onSucces
                             data={tracks}
                             keyExtractor={item => item.id}
                             renderItem={renderTrack}
-                            ListEmptyComponent={<Text style={styles.emptyText}>No hay canciones en esta sección.</Text>}
+                            ListEmptyComponent={
+                                <Text style={styles.emptyText}>
+                                    {searchQuery.length > 1 ? "No se encontraron canciones." : "Escribe algo para buscar en tu servidor."}
+                                </Text>
+                            }
                             showsVerticalScrollIndicator={false}
                         />
                     )}
@@ -128,7 +151,7 @@ export default function AddSongsModal({ isVisible, playlistId, onClose, onSucces
                             {isSaving ? (
                                 <ActivityIndicator size="small" color={colors.primary} />
                             ) : (
-                                <Text style={styles.addButtonText}>Añadir {selectedIds.length} canciones</Text>
+                                <Text style={styles.addButtonText}>Añadir {selectedIds.length > 0 ? selectedIds.length : ''} canciones</Text>
                             )}
                         </TouchableOpacity>
                     </View>

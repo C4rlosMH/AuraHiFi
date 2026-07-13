@@ -12,7 +12,8 @@ export const colors = {
     glassBadge: 'rgba(0, 0, 0, 0.55)',
     reemplazo: '#1b1b1cd9',
     black: '#000000',
-    ilumination: '#ffffffb3'
+    ilumination: '#ffffffb3',
+    drag: 'rgba(255, 255, 255, 0.3)'
 };
 
 export const frosted = {

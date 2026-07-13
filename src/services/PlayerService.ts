@@ -260,6 +260,25 @@ class PlayerService {
             return false;
         }
     }
+    
+    public async addTracksToQueue(tracks: any[]) {
+      try {
+          // 1. Pasamos cada canción por tu interceptor Smart Play para ver si es local o NAS
+          const formattedTracksPromises = tracks.map(track => this.formatToNativeTrack(track, true));
+          
+          // 2. Esperamos a que todas las canciones se formateen correctamente
+          const formattedTracks = await Promise.all(formattedTracksPromises);
+
+          // 3. Mandamos todo el batallón de canciones al final de la fila nativa
+          await TrackPlayer.add(formattedTracks);
+          
+          // 4. Notificamos a tus pantallas que la cola ha crecido
+          this.notifyQueueChange();
+      } catch (error) {
+          console.error("Error al añadir lote a la fila:", error);
+      }
+  }
+    
 }
 
 export const playerService = new PlayerService();
