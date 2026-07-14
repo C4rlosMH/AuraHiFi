@@ -3,28 +3,36 @@ import { colors } from '../../../styles/theme';
 
 export const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: 20,
-        paddingTop: 15,
-        paddingBottom: 140, // Espacio al fondo para que la última canción no quede pegada
+        flex: 1, 
+        //paddingBottom: 15,
+        // 🚀 Quitamos el padding horizontal de aquí para no aplastar la Portada (Header)
+    },
+    listContent: {
+        //paddingTop: 15,
+        paddingBottom: 140, // 🚀 Espacio al fondo movido aquí (sin estilos en línea)
+    },
+    trackWrapper: {
+        paddingTop: 10,
+        paddingHorizontal: 20, // 🚀 El padding lateral ahora envuelve solo a las canciones
     },
     trackRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 10,
     },
     trackNumber: {
-        width: 30, // Ancho fijo para que los títulos queden todos alineados verticalmente
+        width: 30, 
         fontSize: 16,
         color: colors.textMuted,
         fontWeight: '600',
     },
     trackInfo: {
-        flex: 1, // Toma todo el espacio disponible empujando el botón de opciones a la derecha
+        flex: 1, 
         justifyContent: 'center',
     },
     trackTitle: {
         fontSize: 16,
-        color: colors.primary, // Color correcto desde tu theme.ts
+        color: colors.primary, 
         fontWeight: '500',
         marginBottom: 4,
     },
@@ -37,16 +45,16 @@ export const styles = StyleSheet.create({
         marginLeft: 10,
     },
     addAction: {
-        backgroundColor: colors.light, // Usamos tu color insignia (Cian)
+        backgroundColor: colors.light, 
         justifyContent: 'center',
-        alignItems: 'flex-start', // Alineado a la izquierda porque empujamos hacia la derecha
+        alignItems: 'flex-start', 
         paddingLeft: 25,
-        marginBottom: 8, // Para igualar el margen de la pista
+        marginBottom: 8, 
         borderRadius: 8,
         flex: 1,
     },
     addActionIcon: {
-        color: colors.surface, // Negro o el color de fondo para que contraste con el Cian
+        color: colors.surface, 
     },
     coverArt:{
         width: 44,

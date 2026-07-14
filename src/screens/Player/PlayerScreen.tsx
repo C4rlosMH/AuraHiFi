@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Modal, Animated, PanResponder, Dimensions, Image } from 'react-native';
 import TrackPlayer, { RepeatMode, useActiveTrack } from 'react-native-track-player';
+import { GestureHandlerRootView } from 'react-native-gesture-handler'; // 🚀 IMPORTANTE
 
 // --- Servicios ---
 import { playerService } from '../../services/PlayerService';
@@ -35,7 +36,7 @@ interface PlayerScreenProps {
 
 export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerScreenProps) {
     // ESTADOS Y LÓGICA
-    const [trackInfo, setTrackInfo] = useState<{ id: string; title: string; artist: string; artwork: string } | null>(null);
+   const [trackInfo, setTrackInfo] = useState<{ id?: string; title: string; artist: string; artwork?: string } | null>(null);
     //const [isFavorite, setIsFavorite] = useState(false);
     const [shuffleOn, setShuffleOn] = useState(false);
     const [repeatState, setRepeatState] = useState<RepeatMode>(RepeatMode.Off);
@@ -114,11 +115,10 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
         if (!isVisible) return;
         if (activeTrack) {
             setTrackInfo({
-                id: activeTrack.id || '',
+                id: activeTrack.id || undefined,
                 title: activeTrack.title || 'Desconocido',
                 artist: activeTrack.artist || 'Artista Desconocido',
-                artwork: activeTrack.artwork || '',
-                //streamUrl: activeTrack.url || '' 
+                artwork: activeTrack.artwork || undefined,
             });
 
             // 🚀 DOBLE VERIFICACIÓN (NAS + LOCAL)
@@ -230,6 +230,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
             console.error("Error al sincronizar el Shuffle con la UI:", error);
         }
     };
+    
 
     const handleCycleRepeat = async () => {
         let nextMode = RepeatMode.Off;
@@ -244,15 +245,49 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
         }
     };
 
+    const handleReorderQueue = async (newData: any[], fromVisIndex: number, toVisIndex: number) => {
+        if (!currentQueue || currentQueue.length === 0) return;
+        
+        const baseNativeIndex = currentQueue[0].nativeIndex;
+        
+        // 1. Aislamos de dónde a dónde viaja la pista
+        const nativeFrom = currentQueue[fromVisIndex].nativeIndex;
+        const nativeTo = baseNativeIndex + toVisIndex;
+
+        // 2. Fluidez visual instantánea
+        const synchronizedQueue = newData.map((track, idx) => ({
+            ...track,
+            nativeIndex: baseNativeIndex + idx
+        }));
+        setCurrentQueue(synchronizedQueue);
+
+        try {
+            // 3. Bypass al bug nativo: Extraemos la canción nativa de la memoria del teléfono
+            const trackQueue = await TrackPlayer.getQueue();
+            const trackToMove = trackQueue[nativeFrom];
+
+            if (trackToMove) {
+                // Borramos la pista de su lugar anterior para "aflojar" la lista
+                await TrackPlayer.remove([nativeFrom]);
+                
+                // La insertamos limpiamente en su nueva posición
+                await TrackPlayer.add([trackToMove], nativeTo);
+            }
+        } catch (error) {
+            console.error("Error moviendo la pista nativa:", error);
+            fetchCurrentQueue(); 
+        }
+    };
+
     const currentTrackForModal = activeTrack ? {
         id: activeTrack.id,
         title: activeTrack.title || 'Desconocido',
         artist: activeTrack.artist || 'Artista Desconocido',
-        album: activeTrack.album || '',
+        album: activeTrack.album || undefined,
         duration: activeTrack.duration || 0,
-        coverArtUrl: activeTrack.artwork || '',
-        streamUrl: typeof activeTrack.url === 'string' ? activeTrack.url : '',
-        starred: isLiked 
+        coverArtUrl: activeTrack.artwork || undefined,
+        streamUrl: typeof activeTrack.url === 'string' ? activeTrack.url : undefined,
+        starred: isLiked
     } : null;
 
     const handleAddToPlaylist = (trackId: string) => {
@@ -265,106 +300,107 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
     return (
         <>
             <Modal visible={isVisible} animationType="slide" transparent={true} onRequestClose={onClose}>
-                
-                {/* 🚀 SOLUCIÓN: El Animated.View ahora es el contenedor RAÍZ. Todo bajará al mismo tiempo */}
-                <Animated.View style={[styles.modalContainer, { transform: [{ translateY: translateY }] }]}>
-                    
-                    {/* 🎨 El fondo ahora está DENTRO del bloque animado */}
-                    <PlayerBackground artwork={trackInfo?.artwork} />
-
-                    {/* El contenedor de contenido vuelve a ser un View normal */}
-                    <View style={styles.content}>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                    {/* 🚀 SOLUCIÓN: El Animated.View ahora es el contenedor RAÍZ. Todo bajará al mismo tiempo */}
+                    <Animated.View style={[styles.modalContainer, { transform: [{ translateY: translateY }] }]}>
                         
-                        {/* Zona limpia del Gesto del Header */}
-                        <View {...panResponder.panHandlers} style={styles.headerGestureContainer}>
-                            <PlayerHeader 
-                                onClose={onClose} 
-                                showLyrics={showLyrics}
-                                showQueue={showQueue}
-                                trackTitle={trackInfo?.title}
-                                trackArtist={trackInfo?.artist}
-                                artwork={trackInfo?.artwork}
-                                // 🚀 CONECTAMOS EL BOTON AQUI
-                                onOpenOptions={() => setIsOptionsVisible(true)}
-                                onCenterPress={() => {
-                                    setShowLyrics(false);
-                                    setShowQueue(false);
-                                }}
-                            />
-                        </View>
+                        {/* 🎨 El fondo ahora está DENTRO del bloque animado */}
+                        <PlayerBackground artwork={trackInfo?.artwork} />
 
-                        {/* Vistas Centrales Dinámicas */}
-                        {showQueue ? (
-                            <View style={styles.queueListContainer}>
-                                <QueuePanel 
-                                    queue={currentQueue} 
-                                    isPlaying={isPlaying}
-                                    onSelectTrack={async (index) => {
-                                        try {
-                                            await TrackPlayer.skip(index);
-                                            await TrackPlayer.play();
-                                        } catch (error) {
-                                            console.log("Error al saltar en la cola:", error);
-                                        }
+                        {/* El contenedor de contenido vuelve a ser un View normal */}
+                        <View style={styles.content}>
+                            
+                            {/* Zona limpia del Gesto del Header */}
+                            <View {...panResponder.panHandlers} style={styles.headerGestureContainer}>
+                                <PlayerHeader 
+                                    onClose={onClose} 
+                                    showLyrics={showLyrics}
+                                    showQueue={showQueue}
+                                    trackTitle={trackInfo?.title}
+                                    trackArtist={trackInfo?.artist}
+                                    artwork={trackInfo?.artwork}
+                                    // 🚀 CONECTAMOS EL BOTON AQUI
+                                    onOpenOptions={() => setIsOptionsVisible(true)}
+                                    onCenterPress={() => {
+                                        setShowLyrics(false);
+                                        setShowQueue(false);
                                     }}
                                 />
                             </View>
-                        ) : showLyrics ? (
-                            <>
-                                <View style={styles.lyricsSpacer} />
-                                <TrackLyrics /> 
-                            </>
-                        ) : (
-                            /* Zona limpia del Gesto de la Portada */
-                            <View {...panResponder.panHandlers} style={styles.artworkGestureContainer}>
-                                <AlbumArtwork artwork={trackInfo?.artwork} />
-                            </View>
-                        )}
 
-                        {(!showLyrics && !showQueue) && (
-                            <View style={styles.losslessWrapper}>
-                                <LosslessBadge />
-                            </View>
-                        )}
-
-                        {/* Panel de Controles e Información */}
-                        <GlassPanel artwork={trackInfo?.artwork}>
-                            {(!showLyrics && !showQueue) && (
-                                <TrackMetadata 
-                                    title={trackInfo?.title || 'Ninguna pista activa'} 
-                                    artist={trackInfo?.artist || 'Selecciona música'} 
-                                    isFavorite={isLiked}
-                                    onToggleFavorite={handleToggleLike}
-                                />
+                            {/* Vistas Centrales Dinámicas */}
+                            {showQueue ? (
+                                <View style={styles.queueListContainer}>
+                                    <QueuePanel 
+                                        queue={currentQueue} 
+                                        isPlaying={isPlaying}
+                                        onSelectTrack={async (index) => {
+                                            try {
+                                                await TrackPlayer.skip(index);
+                                                await TrackPlayer.play();
+                                            } catch (error) {
+                                                console.log("Error al saltar en la cola:", error);
+                                            }
+                                        }}
+                                        onReorder={handleReorderQueue}
+                                    />
+                                </View>
+                            ) : showLyrics ? (
+                                <>
+                                    <View style={styles.lyricsSpacer} />
+                                    <TrackLyrics /> 
+                                </>
+                            ) : (
+                                /* Zona limpia del Gesto de la Portada */
+                                <View {...panResponder.panHandlers} style={styles.artworkGestureContainer}>
+                                    <AlbumArtwork artwork={trackInfo?.artwork} />
+                                </View>
                             )}
-                            
-                            <ScrubberBar />
-                            
-                            <ReproductionControls 
-                                isPlaying={isPlaying}
-                                shuffleOn={shuffleOn}
-                                onToggleShuffle={handleToggleShuffle}
-                                repeatState={repeatState}
-                                onCycleRepeat={handleCycleRepeat}
-                            />
-                        </GlassPanel>
 
-                        {/* Footer */}
-                        <FooterActions 
-                            showQueue={showQueue}
-                            showLyrics={showLyrics}
-                            onToggleQueue={() => {
-                                setShowQueue(!showQueue);
-                                if (showLyrics) setShowLyrics(false);
-                            }}
-                            onOpenLyrics={() => {
-                                setShowLyrics(!showLyrics);
-                                if (showQueue) setShowQueue(false);
-                            }}
-                        />
-                    </View>
-                </Animated.View>
-                
+                            {(!showLyrics && !showQueue) && (
+                                <View style={styles.losslessWrapper}>
+                                    <LosslessBadge />
+                                </View>
+                            )}
+
+                            {/* Panel de Controles e Información */}
+                            <GlassPanel artwork={trackInfo?.artwork}>
+                                {(!showLyrics && !showQueue) && (
+                                    <TrackMetadata 
+                                        title={trackInfo?.title || 'Ninguna pista activa'} 
+                                        artist={trackInfo?.artist || 'Selecciona música'} 
+                                        isFavorite={isLiked}
+                                        onToggleFavorite={handleToggleLike}
+                                    />
+                                )}
+                                
+                                <ScrubberBar />
+                                
+                                <ReproductionControls 
+                                    isPlaying={isPlaying}
+                                    shuffleOn={shuffleOn}
+                                    onToggleShuffle={handleToggleShuffle}
+                                    repeatState={repeatState}
+                                    onCycleRepeat={handleCycleRepeat}
+                                />
+                            </GlassPanel>
+
+                            {/* Footer */}
+                            <FooterActions 
+                                showQueue={showQueue}
+                                showLyrics={showLyrics}
+                                onToggleQueue={() => {
+                                    setShowQueue(!showQueue);
+                                    if (showLyrics) setShowLyrics(false);
+                                }}
+                                onOpenLyrics={() => {
+                                    setShowLyrics(!showLyrics);
+                                    if (showQueue) setShowQueue(false);
+                                }}
+                            />
+                        </View>
+                    </Animated.View>
+                </GestureHandlerRootView>
             </Modal>
             <TrackOptionsModal 
                 isVisible={isOptionsVisible}

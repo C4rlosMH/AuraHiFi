@@ -4,13 +4,14 @@ import { colors, frosted } from '../../../styles/theme';
 export const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: colors.reemplazo, // Fondo oscuro semi-transparente
+        backgroundColor: 'transparent', // Fondo oscuro semi-transparente
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
     },
     dialogContainer: {
         ...frosted, // Efecto Aura Frosted nativo
+        backgroundColor: colors.reemplazo,
         width: '100%',
         padding: 24,
     },
@@ -24,7 +25,7 @@ export const styles = StyleSheet.create({
     input: {
         backgroundColor: colors.glassDark,
         color: colors.primary,
-        borderRadius: 12,
+        borderRadius: 21,
         paddingHorizontal: 16,
         paddingVertical: 14,
         fontSize: 16,
@@ -55,6 +56,7 @@ export const styles = StyleSheet.create({
     },
     createButton: {
         backgroundColor: colors.light, // Usamos tu color principal de acción
+        borderRadius: 21,
     },
     createText: {
         color: colors.primary,

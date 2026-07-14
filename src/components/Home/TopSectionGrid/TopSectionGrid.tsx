@@ -5,7 +5,6 @@ import TopMixCard from '../Cards/TopMixCard';
 import ResumePlaybackCard from '../Cards/ResumePlaybackCard';
 import { styles } from './TopSectionGrid.styles';
 
-// Obtenemos el ancho exacto de la pantalla del dispositivo
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface TopSectionGridProps {
@@ -15,7 +14,7 @@ interface TopSectionGridProps {
     onPlayPause: () => void;
     onNext: () => void;
     onPrev: () => void;
-    onPlaylistPress: (id: string) => void;
+    onItemPress: (id: string, type: 'playlist' | 'album') => void; // 🚀 Ahora es dinámico
     onResumeCardPress: () => void;
 }
 
@@ -26,14 +25,12 @@ export default function TopSectionGrid({
     onPlayPause,
     onNext,
     onPrev,
-    onPlaylistPress,
+    onItemPress,
     onResumeCardPress,
 }: TopSectionGridProps) {
     
-    // Estado para saber en qué "página" estamos (0 = Grid, 1 = Reproductor)
     const [activeIndex, setActiveIndex] = useState(0);
 
-    // Función que calcula qué página se está viendo al deslizar
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const contentOffsetX = event.nativeEvent.contentOffset.x;
         const currentIndex = Math.round(contentOffsetX / SCREEN_WIDTH);
@@ -44,28 +41,30 @@ export default function TopSectionGrid({
         <View style={styles.container}>
             <ScrollView 
                 horizontal 
-                pagingEnabled // 🚀 CLAVE: Hace que se deslice por páginas completas
+                pagingEnabled 
                 showsHorizontalScrollIndicator={false} 
                 onScroll={handleScroll}
-                scrollEventThrottle={16} // Para que el cálculo sea fluido
+                scrollEventThrottle={16} 
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* --- PÁGINA 1: El Grid de 3x2 --- */}
+                {/* --- PÁGINA 1: El Grid de 3x2 Inteligente --- */}
                 <View style={[styles.pageContainer, { width: SCREEN_WIDTH }]}>
                     {topMixes.length > 0 ? (
                         <View style={styles.gridContainer}>
                             {topMixes.slice(0, 6).map(item => (
                                 <TopMixCard 
-                                    key={item.id} 
-                                    title={item.title} 
-                                    subtitle={`${item.trackCount || 0} canciones`} 
-                                    imageUrl={item.coverArtUrl} 
-                                    onPress={() => onPlaylistPress(item.id)} 
+                                    key={`top-${item.type}-${item.id}`} 
+                                    title={item.title || item.name} 
+                                    // 🚀 Subtítulo dinámico: Si es playlist dice las canciones, si es álbum dice el artista
+                                    subtitle={item.type === 'album' ? item.artist : `${item.trackCount || 0} temas`} 
+                                    // 🚀 CORRECCIÓN DEL BUG: Atrapamos la imagen venga como venga
+                                    imageUrl={item.coverArtUrl || item.imageUrl} 
+                                    onPress={() => onItemPress(item.id, item.type)} 
                                 />
                             ))}
                         </View>
                     ) : (
-                        <View style={styles.gridContainer} /> // Espacio vacío si no hay datos
+                        <View style={styles.gridContainer} /> 
                     )}
                 </View>
 
@@ -80,7 +79,7 @@ export default function TopSectionGrid({
                             onPlayPause={onPlayPause}
                             onNext={onNext}
                             onPrev={onPrev}
-                            onCardPress={onResumeCardPress} // 🚀 PASAMOS LA ACCIÓN AQUÍ
+                            onCardPress={onResumeCardPress}
                         />
                     </View>
                 </View>

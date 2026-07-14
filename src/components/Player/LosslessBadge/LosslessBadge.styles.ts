@@ -15,8 +15,8 @@ export const styles = StyleSheet.create({
         //borderColor: 'rgba(255, 255, 255, 0.15)',    // 🚀 Borde sutil para darle volumen
     },
     logo: {
-        height: 13,        // 🛠️ Ajusta esto dependiendo de si tu imagen es cuadrada o rectangular
-        width: 25,         
+        height: 14,        // 🛠️ Ajusta esto dependiendo de si tu imagen es cuadrada o rectangular
+        width: 30,         
         resizeMode: 'contain',
         marginRight: 6,    // Separación entre el logo y el texto
         opacity: 0.6,

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, Animated, Alert } from 'react-native';
-import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, Text, TouchableOpacity, Image, Animated, Alert } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { styles } from './QueuePanel.styles';
@@ -48,17 +49,15 @@ const PlayingIndicator = ({ isPlaying }: { isPlaying: boolean }) => {
     );
 };
 
-// ========================================================
-// 🚀 COMPONENTE PRINCIPAL (QUEUE PANEL)
-// ========================================================
 interface QueuePanelProps {
     queue: any[];
     isPlaying: boolean;
     onSelectTrack: (index: number) => void;
     onQueueUpdate?: () => void; 
+    onReorder?: (newData: any[], from: number, to: number) => void;
 }
 
-export default function QueuePanel({ queue, isPlaying, onSelectTrack, onQueueUpdate }: QueuePanelProps) {
+export default function QueuePanel({ queue, isPlaying, onSelectTrack, onQueueUpdate, onReorder }: QueuePanelProps) {
     
     const handleDelete = async (trackIndex: number) => {
         const success = await playerService.removeFromQueue(trackIndex);
@@ -83,62 +82,133 @@ export default function QueuePanel({ queue, isPlaying, onSelectTrack, onQueueUpd
                 activeOpacity={0.8}
             >
                 <Animated.View style={[styles.deleteIconAnimated, { transform: [{ scale }] }]}>
-                    {/* 🚀 CORRECCIÓN: Estilo de color inyectado limpiamente desde styles.ts */}
                     <Ionicons name="trash" size={22} style={styles.deleteIcon} />
                 </Animated.View>
             </TouchableOpacity>
         );
     };
 
-    return (
-        <GestureHandlerRootView style={styles.queueContainer}>
-            <Text style={styles.queueHeader}>A CONTINUACIÓN</Text>
-            <FlatList
-                data={queue}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
-                style={styles.queueList}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item, index }) => {
-                    const isCurrent = index === 0; 
-                    const nativeIndex = item.nativeIndex !== undefined ? item.nativeIndex : index;
-                    
-                    return (
-                        <Swipeable
-                            renderRightActions={(progress, dragX) => isCurrent ? null : renderRightActions(progress, dragX, nativeIndex)}
-                            overshootRight={false}
-                        >
-                            <TouchableOpacity 
-                                style={[styles.queueItem, isCurrent && styles.queueItemActive]}
-                                onPress={() => onSelectTrack(nativeIndex)}
-                                activeOpacity={1} 
-                            >
-                                {item.artwork ? (
-                                    <Image source={{ uri: item.artwork }} style={styles.coverArt} />
-                                ) : (
-                                    <View style={styles.coverArt}>
-                                        {/* 🚀 CORRECCIÓN: Estilo de color inyectado limpiamente desde styles.ts */}
-                                        <Ionicons name="musical-notes" size={20} style={styles.placeholderIcon} />
-                                    </View>
-                                )}
+    const renderItem = ({ item, drag, isActive }: RenderItemParams<any>) => {
+        const nativeIndex = item.nativeIndex !== undefined ? item.nativeIndex : 0;
+        
+        return (
+            <ScaleDecorator activeScale={1.03}>
+                <Swipeable
+                    renderRightActions={(progress, dragX) => isActive ? null : renderRightActions(progress, dragX, nativeIndex)}
+                    overshootRight={false}
+                    enabled={!isActive}
+                    friction={2}
+                    containerStyle={isActive ? { 
+                        backgroundColor: '#1A1A1E', 
+                        elevation: 10, 
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 5 },
+                        shadowOpacity: 0.4,
+                        shadowRadius: 6,
+                        borderRadius: 8
+                    } : {}}
+                >
+                    <TouchableOpacity 
+                        style={styles.queueItem}
+                        onPress={() => onSelectTrack(nativeIndex)}
+                        activeOpacity={0.9} 
+                    >
+                        {item.artwork ? (
+                            <Image source={{ uri: item.artwork }} style={styles.coverArt} />
+                        ) : (
+                            <View style={styles.coverArt}>
+                                <Ionicons name="musical-notes" size={20} style={styles.placeholderIcon} />
+                            </View>
+                        )}
 
-                                <View style={styles.queueTextContainer}>
-                                    <Text 
-                                        style={[styles.queueTitle, isCurrent && styles.queueTitleActive]}
-                                        numberOfLines={1}
-                                    >
-                                        {item.title}
-                                    </Text>
-                                    <Text style={styles.queueArtist} numberOfLines={1}>
-                                        {item.artist}
-                                    </Text>
-                                </View>
-                                
-                                {isCurrent && <PlayingIndicator isPlaying={isPlaying} />}
-                            </TouchableOpacity>
-                        </Swipeable>
-                    );
+                        <View style={styles.queueTextContainer}>
+                            <Text style={styles.queueTitle} numberOfLines={1}>
+                                {item.title ? String(item.title) : 'Desconocido'}
+                            </Text>
+                            <Text style={styles.queueArtist} numberOfLines={1}>
+                                {item.artist ? String(item.artist) : 'Artista Desconocido'}
+                            </Text>
+                        </View>
+                        
+                        <TouchableOpacity 
+                            onPressIn={drag} 
+                            style={{ paddingHorizontal: 15, paddingVertical: 10, justifyContent: 'center', alignItems: 'center' }}
+                        >
+                            <Ionicons name="reorder-three" size={26} color={isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.5)"} />
+                        </TouchableOpacity>
+                    </TouchableOpacity>
+                </Swipeable>
+            </ScaleDecorator>
+        );
+    };
+
+    const currentTrack = queue.length > 0 ? queue[0] : null;
+    const upcomingTracks = queue.length > 1 ? queue.slice(1) : [];
+
+    // 🚀 LA SOLUCIÓN DEL ESPACIO: Convertimos la pista actual en el "Header" dinámico de la lista
+    const renderHeader = () => {
+        if (!currentTrack) return null;
+        
+        return (
+            <View style={{ marginBottom: 15 }}>
+                <Text style={styles.queueHeader}>REPRODUCIENDO AHORA</Text>
+                <TouchableOpacity 
+                    style={[styles.queueItem, styles.queueItemActive]}
+                    onPress={() => onSelectTrack(currentTrack.nativeIndex !== undefined ? currentTrack.nativeIndex : 0)}
+                    activeOpacity={1} 
+                >
+                    {currentTrack.artwork ? (
+                        <Image source={{ uri: currentTrack.artwork }} style={styles.coverArt} />
+                    ) : (
+                        <View style={styles.coverArt}>
+                            <Ionicons name="musical-notes" size={20} style={styles.placeholderIcon} />
+                        </View>
+                    )}
+
+                    <View style={styles.queueTextContainer}>
+                        <Text style={[styles.queueTitle, styles.queueTitleActive]} numberOfLines={1}>
+                            {currentTrack.title ? String(currentTrack.title) : 'Desconocido'}
+                        </Text>
+                        <Text style={styles.queueArtist} numberOfLines={1}>
+                            {currentTrack.artist ? String(currentTrack.artist) : 'Artista Desconocido'}
+                        </Text>
+                    </View>
+                    
+                    <PlayingIndicator isPlaying={isPlaying} />
+                </TouchableOpacity>
+
+                {upcomingTracks.length > 0 && (
+                    <Text style={[styles.queueHeader, { marginTop: 20 }]}>A CONTINUACIÓN</Text>
+                )}
+            </View>
+        );
+    };
+
+    return (
+        <View style={[styles.queueContainer, { flex: 1 }]}>
+            <DraggableFlatList
+                // 🚀 AQUÍ OCURRE LA MAGIA: El Header hace scroll junto con el resto
+                ListHeaderComponent={renderHeader}
+                data={upcomingTracks}
+                keyExtractor={(item) => `track-${item.id}-${item.nativeIndex}`}
+                style={styles.queueList}
+                containerStyle={{ flex: 1 }} 
+                contentContainerStyle={{ paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+                renderItem={renderItem}
+                animationConfig={{ damping: 20, mass: 0.1, stiffness: 100, overshootClamping: false }}
+                onDragEnd={({ data, from, to }) => {
+                    if (onReorder) {
+                        const newFullQueue = [currentTrack, ...data];
+                        onReorder(newFullQueue, from + 1, to + 1);
+                    }
                 }}
             />
-        </GestureHandlerRootView>
+            {queue.length <= 1 && (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: -50 }}>
+                     <Text style={{ color: 'rgba(255,255,255,0.4)' }}>No hay más canciones en la cola.</Text>
+                </View>
+            )}
+        </View>
     );
 }

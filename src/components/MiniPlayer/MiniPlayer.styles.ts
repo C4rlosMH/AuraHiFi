@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
         padding: 6,
     },
     playButton: {
-        backgroundColor: colors.accent, // Usamos el color de acento centralizado
+        backgroundColor: colors.light, // Usamos el color de acento centralizado
         width: 36,
         height: 36,
         borderRadius: 18, 

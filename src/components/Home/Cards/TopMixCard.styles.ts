@@ -4,7 +4,7 @@ import { colors } from '../../../styles/theme';
 
 export const styles = StyleSheet.create({
     container: {
-        width: '48%', // 🚀 CAMBIO CLAVE: Usa casi la mitad de la pantalla, dejando espacio para el gap
+        width: '49%', // 🚀 CAMBIO CLAVE: Usa casi la mitad de la pantalla, dejando espacio para el gap
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.glassDark,

@@ -114,6 +114,20 @@ export const navidromeApi = {
         return navidromeApi.mapSongsToTrack(songs, 'getStarred');
     },
 
+    getStarredArtists: async (): Promise<Artist[]> => {
+        const url = buildUrl('getStarred');
+        const data = await fetchFromNavidrome(url);
+        // Navidrome agrupa los favoritos en .song, .album y .artist
+        const artists = data['subsonic-response']?.starred?.artist || [];
+        
+        return artists.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            albumCount: a.albumCount,
+            artistImageUrl: a.artistImageUrl
+        }));
+    },
+
     getAlbumTracks: async (albumId: string): Promise<Track[]> => {
         const url = buildUrl('getAlbum', { id: albumId });
         const data = await fetchFromNavidrome(url);
@@ -348,12 +362,43 @@ export const navidromeApi = {
                 title: song.title,
                 artist: song.artist,
                 album: song.album,
+                albumId: song.albumId,
                 duration: song.duration,
                 starred: song.starred !== undefined,
                 artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
                 url: buildUrl('stream', { id: song.id })
             }))
         };
+    },
+
+    // 🚀 Para la sección de "Tendencias" (Lo que más escuchas)
+    getFrequentAlbums: async (limit: number = 6): Promise<Album[]> => {
+        const url = buildUrl('getAlbumList2', { type: 'frequent', size: limit });
+        const data = await fetchFromNavidrome(url).catch(() => null);
+        
+        const albums = data?.['subsonic-response']?.albumList2?.album || [];
+        return albums.map((album: any) => ({
+            id: album.id,
+            title: album.name || album.title || 'Álbum Desconocido',
+            artist: album.artist || 'Artista Desconocido',
+            year: album.year,
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+        }));
+    },
+
+    // 🚀 Para la sección "Descubre" (Álbumes aleatorios del servidor)
+    getRandomAlbums: async (limit: number = 10): Promise<Album[]> => {
+        const url = buildUrl('getAlbumList2', { type: 'random', size: limit });
+        const data = await fetchFromNavidrome(url).catch(() => null);
+        
+        const albums = data?.['subsonic-response']?.albumList2?.album || [];
+        return albums.map((album: any) => ({
+            id: album.id,
+            title: album.name || album.title || 'Álbum Desconocido',
+            artist: album.artist || 'Artista Desconocido',
+            year: album.year,
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+        }));
     },
 
     toggleStar: async (id: string, isStarred: boolean, type: 'track' | 'album' | 'artist' = 'track') => {
@@ -432,4 +477,6 @@ export const navidromeApi = {
             return [];
         }
     },
+
+    
 };

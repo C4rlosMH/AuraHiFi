@@ -25,6 +25,8 @@ export default function ArtistDetailScreen() {
     const [artistData, setArtistData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isOptionsVisible, setIsOptionsVisible] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
+
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -76,6 +78,20 @@ export default function ArtistDetailScreen() {
     const handlePlayAll = () => {
         if (!artistData?.topTracks?.length) return;
         playQueue(artistData.topTracks, 0);
+    };
+
+    const handleToggleFollow = async () => {
+        const previousState = isFollowing;
+        setIsFollowing(!previousState); // Optimistic UI
+
+        try {
+            const newState = await navidromeApi.toggleStar(id, isFollowing, 'artist');
+            setIsFollowing(newState);
+        } catch (error) {
+            console.log("Error al seguir artista", error);
+            setIsFollowing(previousState);
+            Alert.alert("Error", "No se pudo actualizar el estado del artista.");
+        }
     };
 
     // 3. Botón "Shuffle" principal
@@ -132,6 +148,8 @@ export default function ArtistDetailScreen() {
                         biography={artistData.biography} 
                         actions={
                             <ArtistActions 
+                                isFollowing={isFollowing} 
+                                onToggleFollow={handleToggleFollow} 
                                 onPlayAll={handlePlayAll} 
                                 onShuffle={handleShuffle}
                             />

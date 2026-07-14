@@ -13,22 +13,21 @@ export class PlaylistManagerService {
    * @param name El nombre de la nueva playlist
    * @param trackIds Un arreglo con los IDs de las canciones
    */
-  static async createPlaylist(name: string, trackIds: string[]): Promise<void> {
+  static async createPlaylist(name: string, trackIds: string[] = []): Promise<string> {
     try {
-      // 1. Generamos la URL base con el nombre
       let url = buildUrl('createPlaylist', { name });
       
-      // 2. La API de Subsonic requiere que enviemos los IDs apilados de esta forma: &songId=1&songId=2...
-      // Como nuestro buildUrl inyecta un objeto, lo agregamos de forma manual a la cadena.
       if (trackIds && trackIds.length > 0) {
         trackIds.forEach(id => {
           url += `&songId=${encodeURIComponent(id)}`;
         });
       }
 
-      // 3. Ejecutamos la petición
-      await fetchFromNavidrome(url);
-      console.log(`✅ Playlist "${name}" creada exitosamente en el servidor con ${trackIds.length} tracks.`);
+      const response = await fetchFromNavidrome(url);
+      console.log(`✅ Playlist "${name}" creada exitosamente en el servidor.`);
+      
+      // 🚀 RETORNAMOS EL ID DE LA NUEVA PLAYLIST
+      return response['subsonic-response']?.playlist?.id;
       
     } catch (error) {
       console.error(`🚨 Error al intentar crear la playlist "${name}":`, error);

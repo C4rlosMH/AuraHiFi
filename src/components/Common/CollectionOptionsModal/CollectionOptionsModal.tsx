@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Modal, TouchableOpacity, Image, TouchableWithoutFeedback, ScrollView } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { styles } from './CollectionOptionsModal.styles';
+import { colors } from '../../../styles/theme'
 
 interface CollectionOptionsModalProps {
     isVisible: boolean;
@@ -31,6 +32,7 @@ interface CollectionOptionsModalProps {
     onAutoSort?: () => void;
 
     // Callbacks de Álbum
+    isAlbumSaved?: boolean;
     onToggleLibrary?: () => void;
     onGoToArtist?: () => void;
     onCreateStation?: () => void;
@@ -56,6 +58,7 @@ export default function CollectionOptionsModal({
     onEditMetadata,
     onChangeCover,
     onAutoSort,
+    isAlbumSaved,
     onToggleLibrary,
     onGoToArtist,
     onCreateStation
@@ -162,16 +165,18 @@ export default function CollectionOptionsModal({
                                             </Text>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.optionRow} onPress={onToggleLibrary}>
-                                            <Ionicons 
-                                                name={isInLibrary ? "heart-dislike-outline" : "heart-outline"} 
-                                                size={24} 
-                                                style={styles.optionIcon} 
-                                            />
-                                            <Text style={styles.optionText}>
-                                                {isInLibrary ? "Eliminar de tu biblioteca" : "Añadir a tu biblioteca"}
-                                            </Text>
-                                        </TouchableOpacity>
+                                        {type === 'album' && onToggleLibrary && (
+                                            <TouchableOpacity style={styles.optionRow} onPress={onToggleLibrary}>
+                                                <Ionicons 
+                                                    name={isAlbumSaved ? "checkmark-circle" : "add-circle-outline"} 
+                                                    size={24} 
+                                                    color={isAlbumSaved ? colors.primary : colors.primary} 
+                                                />
+                                                <Text style={[styles.optionText, isAlbumSaved && { color: colors.primary }]}>
+                                                    {isAlbumSaved ? "Eliminar de tu biblioteca" : "Añadir a tu biblioteca"}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
 
                                         <TouchableOpacity style={styles.optionRow} onPress={onCreateStation}>
                                             <Ionicons name="radio-outline" size={24} style={styles.optionIcon} />

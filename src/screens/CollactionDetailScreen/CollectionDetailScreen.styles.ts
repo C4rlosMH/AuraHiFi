@@ -1,4 +1,6 @@
 import { StyleSheet } from 'react-native';
+import { colors } from '../../styles/theme';
+
 
 export const styles = StyleSheet.create({
     container: {
@@ -6,9 +8,10 @@ export const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     flatTextBackground: {
-        width: '100%', // Asegura que cubra todo el ancho horizontal de lado a lado
-        backgroundColor: 'rgba(10, 10, 12, 0.45)', // Un tinte oscuro sutil para que resalten las letras
-        paddingVertical: 10, // Espaciado interno superior e inferior para equilibrar
+        width: '100%', 
+        backgroundColor: colors.reemplazo, 
+        paddingTop: 10,
+        paddingBottom: 15, // 🚀 Aumentamos a 25px para empujar la primer canción hacia abajo (10 + los 15 originales)
     },
     searchBarContainer: {
         paddingTop: 50,
