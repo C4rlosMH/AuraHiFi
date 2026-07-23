@@ -256,6 +256,7 @@ export default function CollectionDetailScreen() {
             setIsDownloaded(true); 
             setDownloadProgress("0%");
 
+            // Preparamos el array de pistas, asegurándonos de extraer el suffix
             const tracksToProcess = details.tracks.map((t: any) => ({
                 id: t.id,
                 title: t.title,
@@ -263,18 +264,30 @@ export default function CollectionDetailScreen() {
                 album: t.album || details.title,
                 duration: t.duration,
                 coverArtUrl: t.coverArtUrl || details.coverArtUrl,
-                streamUrl: t.streamUrl || t.url
+                streamUrl: t.streamUrl || t.url,
+                suffix: t.suffix // <- IMPORTANTE: Pasamos el sufijo para respetar el FLAC
             }));
 
+            // Usamos tu método existente para descargar el lote (solo ajustamos si internamente downloadCollection lo necesita, 
+            // pero el que guarda realmente es el ciclo 'for' de abajo o el mismo método interno).
             await downloadManager.downloadCollection(tracksToProcess, (downloaded, total) => {
                 const percentage = Math.round((downloaded / total) * 100);
                 setDownloadProgress(`${percentage}%`);
             });
 
             console.log("Registrando pistas en la biblioteca offline...");
+            
+            // 🚀 3. EL BUCLE DE GUARDADO Y DESCARGA DE LETRAS
             for (const track of tracksToProcess) {
-                const filename = downloadManager.getSafeFilename(track.title, track.artist);
-                const localUri = await downloadManager.getLocalUriIfExists(filename);
+                // AQUÍ ESTÁ LA MAGIA: Llamamos a downloadTrack individualmente para que intente
+                // rescatar el archivo (si ya existe por downloadCollection) Y disparar el rescate de las letras.
+                const localUri = await downloadManager.downloadTrack(
+                    track.streamUrl, 
+                    track.title, 
+                    track.artist, 
+                    track.suffix, 
+                    track.id // <- ESTE ES EL DATO CLAVE PARA LAS LETRAS
+                );
                 
                 if (localUri) {
                     await localLibraryService.registerDownload(track, localUri);
@@ -282,7 +295,7 @@ export default function CollectionDetailScreen() {
             }
 
             setDownloadProgress(null);
-            Alert.alert("Descarga Completada", "La colección ha sido guardada y catalogada en tu dispositivo.");
+            Alert.alert("Descarga Completada", "La colección y sus letras han sido guardadas offline.");
 
         } catch (error) {
             console.error("Error en la descarga:", error);

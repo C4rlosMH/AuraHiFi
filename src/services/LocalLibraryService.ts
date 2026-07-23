@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Track } from './navidromeApi'; // Ajusta la ruta si es necesario
+import { Track } from './navidromeApi';
 import { downloadManager } from './downloadManager';
+import { lyricsService } from './lyricsService';
+
 
 const LIBRARY_KEY = '@aura_library';
 
@@ -108,22 +110,18 @@ class LocalLibraryService {
     }
 
     public async handleTrackLike(track: Track): Promise<boolean> {
-        // 1. Alternamos el estado en el diccionario local
         const isNowFavorited = await this.toggleFavorite(track);
-        
         if (isNowFavorited) {
-            // 2. Si le dio Like, disparamos la descarga en segundo plano automáticamente
-            console.log(`[LIKE] Iniciando descarga automática de favorito: ${track.title}`);
             try {
-                const localUri = await downloadManager.downloadTrack(track.streamUrl, track.title, track.artist);
-                // Actualizamos el registro para inyectarle la URI física que acabamos de descargar
+                // Pasamos el track.id al final
+                const localUri = await downloadManager.downloadTrack(
+                    track.streamUrl, track.title, track.artist, (track as any).suffix, track.id
+                );
                 await this.registerDownload(track, localUri); 
             } catch (error) {
-                console.error(`[LIKE] Error al descargar favorito automáticamente`, error);
+                console.error(`[LIKE] Error al descargar`, error);
             }
         } 
-        // Nota: Si quitó el Like (isNowFavorited = false), el toggleFavorite ya se encargó de la limpieza lógica.
-        
         return isNowFavorited;
     }
     
@@ -154,6 +152,32 @@ class LocalLibraryService {
           await this.saveLibrary(library);
       }
   }
+
+  // 6. PURGAR REGISTROS MP3 (Limpieza Profunda)
+    public async cleanLegacyMp3Registry(): Promise<void> {
+        const library = await this.getLibrary();
+        let hasChanges = false;
+
+        for (const trackId in library) {
+            const track = library[trackId];
+            // Si el registro apunta a un MP3, lo limpiamos
+            if (track.localUri && track.localUri.toLowerCase().endsWith('.mp3')) {
+                track.isManuallyDownloaded = false;
+                
+                if (!track.isFavorited) {
+                    delete library[trackId]; // Lo borramos por completo si no tiene Like
+                } else {
+                    track.localUri = ""; // Mantenemos el Like, pero vaciamos la ruta
+                }
+                hasChanges = true;
+            }
+        }
+
+        if (hasChanges) {
+            await this.saveLibrary(library);
+            console.log("🧹 Registro local purgado de referencias MP3.");
+        }
+    }
     
 }
 

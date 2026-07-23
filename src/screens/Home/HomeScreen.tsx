@@ -14,6 +14,7 @@ import HomeHeader from '../../components/Home/HomeHeader/HomeHeader';
 import HorizontalSection from '../../components/Home/HorizontalSection/HorizontalSection';
 import ActivityFab from '../../components/Home/ActivityFab/ActivityFab';
 import TopSectionGrid from '../../components/Home/TopSectionGrid/TopSectionGrid';
+import AccountSidebar from '../../components/Common/AccountSidebar/AccountSidebar';
 
 // --- Tarjetas ---
 import SquareAlbumCard from '../../components/Home/Cards/SquareAlbumCard';
@@ -35,6 +36,7 @@ export default function HomeScreen() {
     const [discoveryAlbums, setDiscoveryAlbums] = useState<Album[]>([]); // 4. Descubre (Álbumes)
     const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]); // 5. Recomendados (Canciones)
     const [artists, setArtists] = useState<Artist[]>([]);                // 6. Artistas
+    const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
     // --- Atajo Continuar ---
     const [lastTrack, setLastTrack] = useState<any>(null);
@@ -156,6 +158,7 @@ export default function HomeScreen() {
                 <HomeHeader 
                     profilePicUrl="https://picsum.photos/seed/profile/100/100"
                     onNotificationsPress={() => navigation.navigate('Notifications')}
+                    onProfilePress={() => setIsSidebarVisible(true)}
                 />
 
                 <ScrollView 
@@ -265,6 +268,18 @@ export default function HomeScreen() {
 
                 <ActivityFab onPress={() => console.log('Abrir panel de actividad')} />
             </View>
+
+            <AccountSidebar 
+                isVisible={isSidebarVisible}
+                onClose={() => setIsSidebarVisible(false)}
+                profilePicUrl="https://picsum.photos/seed/profile/100/100"
+                userName="Usuario Local"
+                serverName="Aura Server"
+                onGoToSettings={() => {
+                    setIsSidebarVisible(false); // Primero cerramos el sidebar
+                    navigation.navigate('SettingsMain'); // 🚀 Viajamos a la nueva pantalla
+                }}
+            />
         </AuraBackground>
     );
 }

@@ -83,9 +83,27 @@ export default function App() {
             {/* El NavigationContainer ahora es el contenedor principal */}
             <NavigationContainer
                 onStateChange={(state) => {
-                    const currentRoute = state?.routes[state.index]?.name;
-                    // Si en el futuro vas a 'Settings', se ocultará en automático
-                    setShowMiniPlayer(currentRoute !== 'Settings');
+                    if (!state) return;
+
+                    // Función recursiva para obtener el nombre exacto de la pantalla actual
+                    const getActiveRouteName = (routeState: any): string => {
+                        const route = routeState.routes[routeState.index];
+                        if (route.state) {
+                            return getActiveRouteName(route.state);
+                        }
+                        return route.name;
+                    };
+
+                    const currentRoute = getActiveRouteName(state);
+
+                    // Lista de pantallas donde el MiniPlayer NO debe aparecer
+                    const hiddenMiniPlayerScreens = [
+                        'SettingsMain', 
+                        'AudioSettings', 
+                        'StorageSettings' // Ya lo dejamos preparado para la que sigue
+                    ];
+
+                    setShowMiniPlayer(!hiddenMiniPlayerScreens.includes(currentRoute));
                 }}
             >
                 <View style={{ flex: 1, backgroundColor: '#000000' }}>
@@ -94,7 +112,10 @@ export default function App() {
 
                     {/* COMPONENTE MODULAR INYECTADO */}
                     {showMiniPlayer && (
-                        <MiniPlayer onExpand={() => setIsFullPlayerVisible(true)} />
+                        <MiniPlayer 
+                        onExpand={() => setIsFullPlayerVisible(true)} 
+                        isVisible={showMiniPlayer} 
+                    />
                     )}
 
                     <PlayerScreen 

@@ -64,7 +64,7 @@ export default function PlayerBackground({ artwork }: PlayerBackgroundProps) {
             >
                 <Image 
                     source={{ uri: artwork }}
-                    style={{ width: height * 0.70, height: height * 0.70 }} 
+                    style={{ width: height * 0.75, height: height * 0.75 }} 
                     blurRadius={5} 
                     resizeMode="cover"
                 />

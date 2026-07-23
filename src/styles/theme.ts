@@ -11,13 +11,16 @@ export const colors = {
     progressBg: 'rgba(255, 255, 255, 0.15)',
     glassBadge: 'rgba(0, 0, 0, 0.55)',
     reemplazo: '#1b1b1cd9',
+    so_dark: '#040404be',
     black: '#000000',
     ilumination: '#ffffffb3',
-    drag: 'rgba(255, 255, 255, 0.3)'
+    drag: 'rgba(255, 255, 255, 0.3)',
+    cycle: '#13131348',
 };
 
 export const frosted = {
-    backgroundColor: 'rgba(70, 70, 70, 0.38)',
+    //backgroundColor: 'rgba(70, 70, 70, 0.38)',
+    backgroundColor: 'rgba(50, 50, 50, 0.23)',
     borderRadius: 20,
     
     // Bisel de luz matemática (Rim Light) para simular el relieve del vidrio

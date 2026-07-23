@@ -8,14 +8,20 @@ const AURA_LOGO_IMAGE = require('../../../assets/aura-lossless.png');
 interface HomeHeaderProps {
     profilePicUrl: string;
     onNotificationsPress: () => void;
+    onProfilePress: () => void;
 }
 
-export default function HomeHeader({ profilePicUrl, onNotificationsPress }: HomeHeaderProps) {
+export default function HomeHeader({ profilePicUrl, onNotificationsPress, onProfilePress }: HomeHeaderProps) {
     return (
         <View style={styles.container}>
-            <View style={styles.profileContainer}>
+            <TouchableOpacity 
+                style={styles.profileContainer} 
+                onPress={onProfilePress} 
+                activeOpacity={0.8}
+            >
                 <Image source={{ uri: profilePicUrl }} style={styles.profilePic} />
-            </View>
+            </TouchableOpacity>
+            
             <View style={styles.logoContainer}>
                 <Image source={AURA_LOGO_IMAGE} style={styles.logoImage} resizeMode="contain" />
             </View>

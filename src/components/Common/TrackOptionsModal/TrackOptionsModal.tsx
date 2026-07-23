@@ -8,7 +8,9 @@ import { playerService } from '../../../services/PlayerService';
 import { downloadManager } from '../../../services/downloadManager';
 import { PlaylistManagerService } from '../../../services/PlaylistManagerService';
 import { localLibraryService } from '../../../services/LocalLibraryService';
+import { lyricsService } from '../../../services/lyricsService';
 import { styles } from './TrackOptionsModal.styles';
+
 
 //import AddToPlaylistModal from '../AddToPlaylistModal/AddToPlaylistModal';
 
@@ -111,12 +113,18 @@ export default function TrackOptionsModal({
     const handleDownload = async () => {
         onClose();
         try {
-            // 🚀 NUEVO: Conectado a tus managers reales
-            const localUri = await downloadManager.downloadTrack(track.streamUrl, track.title, track.artist);
+            // Le pasamos track.id como quinto parámetro
+            const localUri = await downloadManager.downloadTrack(
+                track.streamUrl, 
+                track.title, 
+                track.artist, 
+                (track as any).suffix,
+                track.id 
+            );
+
             await localLibraryService.registerDownload(track as any, localUri);
-            Alert.alert("Descarga Completada", `"${track.title}" se guardó offline.`);
+            Alert.alert("Descarga Completada", `"${track.title}" guardado offline.`);
         } catch (error) {
-            console.error("Error descargando pista:", error);
             Alert.alert("Error", "No se pudo descargar la canción.");
         }
     };

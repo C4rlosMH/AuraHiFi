@@ -189,15 +189,12 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
     }, []);
     // MANEJADORES DE EVENTOS
     const handleToggleLike = async () => {
-        // 🚀 Validamos usando directamente el hook nativo
         if (!activeTrack || !activeTrack.id) return;
 
-        // Optimistic UI: Cambiamos el color de inmediato para mantener los 60 FPS
         const previousState = isLiked;
         setIsLiked(!isLiked); 
 
         try {
-            // Construimos el mapeo extrayendo los datos de la pista activa
             const trackForLocal = {
                 id: activeTrack.id,
                 title: activeTrack.title || 'Desconocido',
@@ -205,19 +202,17 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                 album: activeTrack.album || '',
                 duration: activeTrack.duration || 0,
                 coverArtUrl: activeTrack.artwork || '',
-                // Nos aseguramos de extraer el string de la URL nativa de forma segura
-                streamUrl: typeof activeTrack.url === 'string' ? activeTrack.url : ''
+                streamUrl: typeof activeTrack.url === 'string' ? activeTrack.url : '',
+                // 🚀 EL ÚNICO CAMBIO: Le pasamos el suffix para proteger el FLAC
+                suffix: (activeTrack as any).suffix
             };
 
-            // 1. Magia Local: Se cataloga y se inicia la descarga en segundo plano si corresponde
             await localLibraryService.handleTrackLike(trackForLocal as any);
-            
-            // 2. Sincronización NAS: Le avisamos a tu servidor Navidrome
             await playerService.toggleFavoriteServer(activeTrack.id);
             
         } catch (error) {
             console.error("Error al gestionar el Like:", error);
-            setIsLiked(previousState); // Revertimos el icono si el almacenamiento falla
+            setIsLiked(previousState); 
         }
     };
 
