@@ -26,10 +26,21 @@ export default function ResumePlaybackCard({
 }: ResumePlaybackCardProps) {
     return (
         <TouchableOpacity 
-           /*  style={styles.container}  */
-            activeOpacity={0.9} 
+            activeOpacity={0.7} 
             onPress={onCardPress}
+            style={styles.cardWrapper}
         >
+            {/* 1. Capa Base: La portada desenfocada */}
+            <Image 
+                source={{ uri: coverUrl }} 
+                style={styles.backgroundImage} 
+                blurRadius={5} 
+            />
+
+            {/* 2. Capa Media: Oscurecimiento para contraste */}
+            <View style={styles.darkOverlay} />
+
+            {/* 3. Capa Superior: Tu contenedor original intacto con frosted */}
             <View style={styles.container}>
                 <Text style={styles.headerText}>Continuar escuchando</Text>
                 
@@ -47,7 +58,12 @@ export default function ResumePlaybackCard({
                     </TouchableOpacity>
                     
                     <TouchableOpacity onPress={onPlayPause} style={styles.playButton}>
-                        <Ionicons name={isPlaying ? "pause" : "play"} size={26} color={styles.playIconColor.color} />
+                        <Ionicons 
+                            name={isPlaying ? "pause" : "play"} 
+                            size={26} 
+                            color={styles.playIconColor.color} 
+                            style={!isPlaying ? { paddingLeft: 4 } : {}}
+                        />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={onNext} style={styles.controlButton}>

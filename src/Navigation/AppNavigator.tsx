@@ -20,16 +20,12 @@ import SettingsMainScreen from '../screens/Settings/SettingsMainScreen';
 import AudioSettingsScreen from '../screens/Settings/AudioSettings/AudioSettingsScreen';
 import StorageSettingsScreen from '../screens/Settings/StorageSettings/StorageSettingsScreen';
 
+import GlobalSearchScreen from '../screens/GlobalSearch/GlobalSearchScreen'; // Importamos la pantalla de búsqueda global
+import ExploreGenreScreen from '../screens/GlobalSearch/ExploreGenreScreen';
 // --- Estilos ---
 import { styles } from './AppNavigator.styles';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
-
-const SearchScreen = () => (
-    <View style={styles.screenContainer}>
-        <Text style={styles.text}>🔍 Búsqueda Lidarr (Próximamente)</Text>
-    </View>
-);
 
 const CommandScreen = () => (
     <View style={styles.screenContainer}>
@@ -59,6 +55,17 @@ function LibraryStackNavigator() {
             <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
             <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} />
             <Stack.Screen name="MathResult" component={MathResultScreen} />
+        </Stack.Navigator>
+    );
+}
+
+function SearchStackNavigator() {
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="SearchMain" component={GlobalSearchScreen} />
+            <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
+            <Stack.Screen name="ArtistDetail" component={ArtistDetailScreen} />
+            <Stack.Screen name="ExploreGenre" component={ExploreGenreScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
 }
@@ -96,7 +103,8 @@ function MainTabs() {
             })}
         >
             <Tab.Screen name="Home" component={HomeStackNavigator} options={{ title: 'Inicio' }} />
-            <Tab.Screen name="Search" component={SearchScreen} options={{ title: 'Buscar' }} />
+            {/* Aquí reemplazamos SearchScreen por GlobalSearchScreen */}
+            <Tab.Screen name="Search" component={SearchStackNavigator} options={{ title: 'Buscar' }} />
             <Tab.Screen name="Library" component={LibraryStackNavigator} options={{ title: 'Biblioteca' }} />
             
             {isAdmin && (

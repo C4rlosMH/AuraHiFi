@@ -2,17 +2,33 @@ import { StyleSheet } from 'react-native';
 import { colors, frosted } from '../../../styles/theme';
 
 export const styles = StyleSheet.create({
+    cardWrapper: {
+        borderRadius: 24, // Mantiene el recorte suave del frosted
+        overflow: 'hidden', // Evita que la imagen difuminada se salga de los bordes
+        position: 'relative',
+    },
+    backgroundImage: {
+        ...StyleSheet.absoluteFillObject,
+        width: '100%',
+        height: '100%',
+    },
+    darkOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.2)', // Una capa extra de sombra para asegurar contraste
+    },
     container: {
         ...frosted,
+        // No es necesario flex: 1 aquí porque el contenido dicta el tamaño, 
+        // pero lo mantenemos si así lo requiere tu Home
         flex: 1, 
-        padding: 20, // Más aire para que respire el diseño
-        justifyContent: 'space-between', // Distribuye perfectamente el header, la info y los controles
-        backgroundColor: colors.glassDark, // Usamos tu cristal oscuro del tema
+        padding: 20,
+        justifyContent: 'space-between',
+        //backgroundColor: colors.glassDark,
     },
     headerText: {
-        color: colors.textMuted, // Color de acento de tu tema (#7B7BEA)
+        color: colors.textMuted,
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: 1.5,
     },
@@ -22,11 +38,11 @@ export const styles = StyleSheet.create({
         marginVertical: 15,
     },
     coverImage: {
-        width:84, // Aumentado de 48 para un aspecto más audiófilo
+        width: 84,
         height: 84,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: colors.border,
+        //borderColor: colors.border,
     },
     textColumn: {
         flex: 1,
@@ -35,7 +51,7 @@ export const styles = StyleSheet.create({
     },
     title: {
         color: colors.primary,
-        fontSize: 20, // Tipografía más grande y legible
+        fontSize: 20,
         fontWeight: '700',
         marginBottom: 4,
     },
@@ -46,7 +62,7 @@ export const styles = StyleSheet.create({
     controlsRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-around', // Distribuye los botones horizontalmente de forma elegante
+        justifyContent: 'space-around',
         width: '100%',
         paddingTop: 5,
     },
@@ -56,13 +72,12 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
     },
     playButton: {
-        width: 52, // Botón de reproducción más grande y ergonómico
+        width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: colors.light, // Blanco sólido de tu tema
+        backgroundColor: colors.light,
         justifyContent: 'center',
         alignItems: 'center',
-        // Sombra sutil para darle relieve al botón de Play
         shadowColor: colors.black,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
@@ -73,6 +88,6 @@ export const styles = StyleSheet.create({
         color: colors.primary,
     },
     playIconColor: {
-        color: colors.background, // Icono oscuro sobre el botón blanco
+        color: colors.background,
     }
 });

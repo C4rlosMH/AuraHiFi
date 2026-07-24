@@ -478,5 +478,73 @@ export const navidromeApi = {
         }
     },
 
+    searchUnified: async (query: string) => {
+        if (!query.trim()) return { artists: [], albums: [], tracks: [] };
+        
+        try {
+            // Pedimos 3 artistas, 5 álbumes y 5 canciones para no saturar la vista
+            const url = buildUrl('search3', { query, artistCount: 3, albumCount: 5, songCount: 5 });
+            const data = await fetchFromNavidrome(url);
+            
+            const result = data['subsonic-response']?.searchResult3 || {};
+            
+            return {
+                artists: result.artist || [],
+                albums: result.album || [],
+                tracks: result.song || []
+            };
+        } catch (error) {
+            console.error("Error buscando en el servidor NAS:", error);
+            return { artists: [], albums: [], tracks: [] };
+        }
+    },
+
+    // Obtener todos los generos disponibles en el servidor
+    getGenres: async () => {
+        const url = buildUrl('getGenres');
+        const data = await fetchFromNavidrome(url);
+        return data['subsonic-response']?.genres?.genre || [];
+    },
+
+    // Obtener canciones aleatorias de un genero especifico (Para el Mix)
+    getGenreMix: async (genre: string, count: number = 50) => {
+        // Limpiamos el texto por si trae espacios al inicio o al final
+        const cleanGenre = genre.trim();
+        
+        // PLAN A: Intentamos con la busqueda aleatoria nativa
+        let url = buildUrl('getRandomSongs', { genre: cleanGenre, size: count });
+        let data = await fetchFromNavidrome(url);
+        let songs = data['subsonic-response']?.randomSongs?.song || [];
+
+        // PLAN B: Si Navidrome no devuelve nada (comun con generos como "Electronica")
+        // Forzamos la busqueda estricta por genero
+        if (songs.length === 0) {
+            console.log(`getRandomSongs fallo para "${cleanGenre}". Usando Plan B...`);
+            // Pedimos un lote mas grande para tener de donde escoger
+            url = buildUrl('getSongsByGenre', { genre: cleanGenre, count: 150 });
+            data = await fetchFromNavidrome(url);
+            let fallbackSongs = data['subsonic-response']?.songsByGenre?.song || [];
+            
+            // Mezclamos (shuffle) el arreglo manualmente para simular el modo radio
+            songs = fallbackSongs.sort(() => Math.random() - 0.5).slice(0, count);
+        }
+
+        return navidromeApi.mapSongsToTrack(songs, 'getGenreMix');
+    },
+
+    // Obtener albumes filtrados por genero (Para Nuevos Lanzamientos y Destacados)
+    getGenreAlbums: async (genre: string, type: 'newest' | 'frequent' | 'random', count: number = 15): Promise<Album[]> => {
+        const url = buildUrl('getAlbumList2', { type, genre, size: count });
+        const data = await fetchFromNavidrome(url);
+        const albums = data['subsonic-response']?.albumList2?.album || [];
+        
+        return albums.map((album: any) => ({
+            id: album.id,
+            title: album.name || album.title || 'Album Desconocido',
+            artist: album.artist || 'Artista Desconocido',
+            year: album.year,
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+        }));
+    },
     
 };
