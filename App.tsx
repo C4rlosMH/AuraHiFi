@@ -4,26 +4,25 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
 
+// --- Contexto de Autenticación ---
+import { AuthProvider } from './src/context/AuthContext'; // 🚀 NUEVA IMPORTACIÓN
+
 // --- Servicios ---
 import { navidromeApi } from './src/services/navidromeApi';
 import { downloadManager } from './src/services/downloadManager';
 import { setupTrackPlayer } from './src/services/trackPlayerSetup';
 
-
 // --- Componentes ---
 import AppNavigator from './src/Navigation/AppNavigator';
-import MiniPlayer from './src/components/MiniPlayer/MiniPlayer'; // <--- IMPORTACIÓN
+import MiniPlayer from './src/components/MiniPlayer/MiniPlayer'; 
 import PlayerScreen from './src/screens/Player/PlayerScreen';
 import { styles } from './App.styles';
-import { colors } from './src/styles/theme'
+import { colors } from './src/styles/theme';
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [isFullPlayerVisible, setIsFullPlayerVisible] = useState(false);
-    
     const [showMiniPlayer, setShowMiniPlayer] = useState(true);
-
-    // 🚀 1. DEVOLVEMOS EL ESTADO DE REPRODUCCIÓN PARA LA PANTALLA GIGANTE
     const [isPlaying, setIsPlaying] = useState(false);
 
     useTrackPlayerEvents([Event.PlaybackState], (event) => {
@@ -32,32 +31,22 @@ export default function App() {
         }
     });
 
-    /* useEffect(() => {
-        async function initialize() {
-            await setupTrackPlayer();
-            setIsLoading(false);
-            
-            navidromeApi.getStarredTracks().then(starred => {
-                if (starred.length > 0) downloadManager.downloadCollection(starred, () => {});
-            }).catch(err => console.error(err));
-        }
-        initialize();
-    }, []); */
-
     useEffect(() => {
         async function initialize() {
-            // 🚀 1. RESTAURAMOS LA INICIALIZACIÓN DEL MOTOR (ESTO ES LO QUE SE ROMPIÓ)
             await setupTrackPlayer(); 
             setIsLoading(false);
             
-            // 🚀 2. RESTAURAMOS TU LÓGICA DE DESCARGAS EN SEGUNDO PLANO
-            navidromeApi.getStarredTracks().then(starred => {
+            // Nota: Aquí podrías querer envolver esto en un if(user) más adelante 
+            // para que solo descargue si alguien ya inició sesión.
+            try {
+                const starred = await navidromeApi.getStarredTracks();
                 if (starred.length > 0) downloadManager.downloadCollection(starred, () => {});
-            }).catch(err => console.error(err));
+            } catch(err) {
+                console.log("Esperando inicio de sesión para descargar favoritos...");
+            }
         }
         initialize();
 
-        // 3. Mantenemos el escuchador para abrir el player gigante desde el Home
         const subscription = DeviceEventEmitter.addListener('expandPlayer', () => {
             setIsFullPlayerVisible(true);
         });
@@ -79,53 +68,54 @@ export default function App() {
     }
 
     return (
-        <SafeAreaProvider>
-            {/* El NavigationContainer ahora es el contenedor principal */}
-            <NavigationContainer
-                onStateChange={(state) => {
-                    if (!state) return;
+        // 🚀 ENVOLVEMOS TODO CON EL PROVEEDOR DE AUTENTICACIÓN
+        <AuthProvider>
+            <SafeAreaProvider>
+                <NavigationContainer
+                    onStateChange={(state) => {
+                        if (!state) return;
 
-                    // Función recursiva para obtener el nombre exacto de la pantalla actual
-                    const getActiveRouteName = (routeState: any): string => {
-                        const route = routeState.routes[routeState.index];
-                        if (route.state) {
-                            return getActiveRouteName(route.state);
-                        }
-                        return route.name;
-                    };
+                        const getActiveRouteName = (routeState: any): string => {
+                            const route = routeState.routes[routeState.index];
+                            if (route.state) {
+                                return getActiveRouteName(route.state);
+                            }
+                            return route.name;
+                        };
 
-                    const currentRoute = getActiveRouteName(state);
+                        const currentRoute = getActiveRouteName(state);
 
-                    // Lista de pantallas donde el MiniPlayer NO debe aparecer
-                    const hiddenMiniPlayerScreens = [
-                        'SettingsMain', 
-                        'AudioSettings', 
-                        'StorageSettings' // Ya lo dejamos preparado para la que sigue
-                    ];
+                        const hiddenMiniPlayerScreens = [
+                            'SettingsMain', 
+                            'AudioSettings', 
+                            'StorageSettings',
+                            'Login',  // 🚀 OCULTAR EN LOGIN
+                            'SignUp'  // 🚀 OCULTAR EN REGISTRO
+                        ];
 
-                    setShowMiniPlayer(!hiddenMiniPlayerScreens.includes(currentRoute));
-                }}
-            >
-                <View style={{ flex: 1, backgroundColor: '#000000' }}>
-                    
-                    <AppNavigator />
+                        setShowMiniPlayer(!hiddenMiniPlayerScreens.includes(currentRoute));
+                    }}
+                >
+                    <View style={{ flex: 1, backgroundColor: '#000000' }}>
+                        
+                        <AppNavigator />
 
-                    {/* COMPONENTE MODULAR INYECTADO */}
-                    {showMiniPlayer && (
-                        <MiniPlayer 
-                        onExpand={() => setIsFullPlayerVisible(true)} 
-                        isVisible={showMiniPlayer} 
-                    />
-                    )}
+                        {showMiniPlayer && (
+                            <MiniPlayer 
+                                onExpand={() => setIsFullPlayerVisible(true)} 
+                                isVisible={showMiniPlayer} 
+                            />
+                        )}
 
-                    <PlayerScreen 
-                        isVisible={isFullPlayerVisible} 
-                        onClose={() => setIsFullPlayerVisible(false)} 
-                        isPlaying={isPlaying} 
-                    />
-                    
-                </View>
-            </NavigationContainer>
-        </SafeAreaProvider>
+                        <PlayerScreen 
+                            isVisible={isFullPlayerVisible} 
+                            onClose={() => setIsFullPlayerVisible(false)} 
+                            isPlaying={isPlaying} 
+                        />
+                        
+                    </View>
+                </NavigationContainer>
+            </SafeAreaProvider>
+        </AuthProvider>
     );
 }

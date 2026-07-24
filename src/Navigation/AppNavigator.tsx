@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -7,6 +7,10 @@ import { Ionicons, Octicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 
 import { colors } from '../styles/theme';
+import { AuthContext } from '../context/AuthContext';
+
+import LoginScreen from '../screens/Auth/LoginScreen';
+import SignUpScreen from '../screens/Auth/SignUpScreen';
 
 // --- PANTALLAS REALES ---
 import HomeScreen from '../screens/Home/HomeScreen';
@@ -116,14 +120,33 @@ function MainTabs() {
 
 // 🚀 EL NAVEGADOR PRINCIPAL AHORA ES EL ROOT STACK
 export default function AppNavigator() {
+    const { user, isLoading } = useContext(AuthContext);
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color={colors.light} />
+            </View>
+        );
+    }
+
     return (
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
-            {/* Las pestañas son la pantalla base */}
-            <RootStack.Screen name="MainTabs" component={MainTabs} />
-            {/* Settings flota por encima de todo */}
-            <RootStack.Screen name="SettingsMain" component={SettingsMainScreen} />
-            <RootStack.Screen name="AudioSettings" component={AudioSettingsScreen} />
-            <RootStack.Screen name="StorageSettings" component={StorageSettingsScreen} />
+            {user == null ? (
+                // 🔒 USUARIO NO AUTENTICADO
+                <>
+                    <RootStack.Screen name="Login" component={LoginScreen} />
+                    <RootStack.Screen name="SignUp" component={SignUpScreen} />
+                </>
+            ) : (
+                // 🔓 USUARIO AUTENTICADO
+                <>
+                    <RootStack.Screen name="MainTabs" component={MainTabs} />
+                    <RootStack.Screen name="SettingsMain" component={SettingsMainScreen} />
+                    <RootStack.Screen name="AudioSettings" component={AudioSettingsScreen} />
+                    <RootStack.Screen name="StorageSettings" component={StorageSettingsScreen} />
+                </>
+            )}
         </RootStack.Navigator>
     );
 }

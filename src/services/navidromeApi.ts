@@ -1,20 +1,27 @@
 const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP; 
 const BASE_URL = `${SERVER_IP}/rest`;
 
-const USER = process.env.EXPO_PUBLIC_NAVIDROME_USER;
-const PASS = process.env.EXPO_PUBLIC_NAVIDROME_PASS;
+const ADMIN_USER = process.env.EXPO_PUBLIC_NAVIDROME_USER;
+const ADMIN_PASS = process.env.EXPO_PUBLIC_NAVIDROME_PASS;
+
+let activeUser = '';
+let activePass = '';
+
 const CLIENT = 'AuraHiFi';
-const VERSION = '1.16.1';
+const VERSION = '1.17.1';
 
-// Tu función original (la dejamos por si alguna función antigua la sigue usando)
-const getAuthQuery = () => `u=${USER}&p=${PASS}&v=${VERSION}&c=${CLIENT}&f=json`;
+export const setNavidromeCredentials = (user: string, pass: string) => {
+    activeUser = user;
+    activePass = pass;
+};
 
-// 1. NUESTRA NUEVA FUNCIÓN BUILD URL BLINDADA
 export const buildUrl = (endpoint: string, extraParams: Record<string, any> = {}) => {
-    // Usamos encodeURIComponent en USER y PASS para evitar que símbolos rompan la URL
-    let url = `${BASE_URL}/${endpoint}?u=${encodeURIComponent(USER || '')}&p=${encodeURIComponent(PASS || '')}&v=${VERSION}&c=${encodeURIComponent(CLIENT)}&f=json`;
+    if (!activeUser || !activePass) {
+        console.warn("⚠️ Intentando hacer una petición sin sesión activa.");
+    }
+
+    let url = `${BASE_URL}/${endpoint}?u=${encodeURIComponent(activeUser)}&p=${encodeURIComponent(activePass)}&v=${VERSION}&c=${encodeURIComponent(CLIENT)}&f=json`;
     
-    // Inyectamos dinámicamente cualquier parámetro extra (como limits, offsets, etc.)
     Object.entries(extraParams).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
             url += `&${key}=${encodeURIComponent(String(value))}`;
@@ -80,7 +87,59 @@ export const navidromeApi = {
     // ------------------------------------------------------------------
     // TUS FUNCIONES ANTIGUAS (Motor del Player, Home y Letras)
     // ------------------------------------------------------------------
-    
+    createUser: async (newUsername: string, newPass: string, newName: string, newEmail: string): Promise<boolean> => {
+        try {
+            const ADMIN_USER = process.env.EXPO_PUBLIC_NAVIDROME_USER || '';
+            const ADMIN_PASS = process.env.EXPO_PUBLIC_NAVIDROME_PASS || '';
+            const SERVER_IP = process.env.EXPO_PUBLIC_SERVER_IP;
+
+            // PASO 1: Iniciar sesión en la API Nativa para obtener un Token JWT de Administrador
+            const authResponse = await fetch(`${SERVER_IP}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    username: ADMIN_USER, 
+                    password: ADMIN_PASS 
+                })
+            });
+
+            if (!authResponse.ok) {
+                console.error("⚠️ Falló la autenticación del Admin en la API Nativa");
+                return false;
+            }
+
+            const authData = await authResponse.json();
+            const token = authData.token;
+
+            // PASO 2: Usar el Token para crear el usuario con los datos reales
+            const createUserResponse = await fetch(`${SERVER_IP}/api/user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-nd-authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    userName: newUsername,           // ID Técnico para loguearse
+                    name: newName,                   // Nombre a mostrar en la interfaz
+                    email: newEmail,                 // Correo real
+                    password: newPass,               
+                    isAdmin: false                   // Permisos de usuario regular
+                })
+            });
+
+            if (!createUserResponse.ok) {
+                const errorText = await createUserResponse.text();
+                console.error("⚠️ Navidrome rechazó la creación:", errorText);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error crítico creando usuario nativo:", error);
+            return false;
+        }
+    },
+
     mapSongsToTrack: (songs: any[], query: string): Track[] => {
         return songs.map((song: any) => ({
             id: song.id,

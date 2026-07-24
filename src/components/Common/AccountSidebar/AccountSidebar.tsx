@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import { 
     View, 
     Text, 
@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from './AccountSidebar.styles';
+
+import { AuthContext } from '../../../context/AuthContext'
 
 const { width } = Dimensions.get('window');
 const SIDEBAR_WIDTH = width * 0.8;
@@ -40,6 +42,12 @@ export default function AccountSidebar({
     // Animaciones
     const slideAnim = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const { logout } = useContext(AuthContext);
+
+    const handleLogout = async () => {
+        onClose(); // Cerramos el sidebar primero con animación
+        await logout(); // Borramos credenciales y cambiamos de estado
+    };
 
     useEffect(() => {
         if (isVisible) {
@@ -161,12 +169,12 @@ export default function AccountSidebar({
                     </View>
 
                     {/* ZONA INFERIOR */}
-                    <TouchableOpacity style={styles.optionRow} onPress={() => console.log("Cerrar Sesión")}>
+                    <TouchableOpacity style={styles.optionRow} onPress={handleLogout}>
                         <Ionicons name="log-out-outline" size={24} style={styles.dangerIcon} />
                         <Text style={[styles.optionText, styles.optionTextDanger]}>Cerrar sesión</Text>
                     </TouchableOpacity>
                     
-                    <Text style={styles.versionText}>Aura Hi-Fi v1.5.0</Text>
+                    <Text style={styles.versionText}>Aura Hi-Fi v1.16.0</Text>
                 </Animated.View>
             </View>
         </Modal>
