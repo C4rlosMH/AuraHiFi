@@ -4,6 +4,7 @@ export const colors = {
     accent: '#3D3DD5',
     premium: '#d4af37',
     light: '#7B7BEA',
+    listening: '#b5b5ff',
     surface: '#1c1c1e',
     border: 'rgba(255, 255, 255, 0.12)',
     glassDark: 'rgba(255, 255, 255, 0.06)',
@@ -16,6 +17,7 @@ export const colors = {
     ilumination: '#ffffffb3',
     drag: 'rgba(255, 255, 255, 0.3)',
     cycle: '#13131348',
+    activity: 'rgba(0, 0, 0, 0.8)'
 };
 
 export const frosted = {

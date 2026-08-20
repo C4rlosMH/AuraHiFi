@@ -228,6 +228,12 @@ export const navidromeApi = {
         return artistsList;
     },
 
+    getUser: async (username: string) => {
+        const url = buildUrl('getUser', { username });
+        const data = await fetchFromNavidrome(url).catch(() => null);
+        return data?.['subsonic-response']?.user;
+    },
+
     getArtistDetails: async (artistId: string, artistName?: string) => {
         const artistUrl = buildUrl('getArtist', { id: artistId });
         const infoUrl = buildUrl('getArtistInfo2', { id: artistId });

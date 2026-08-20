@@ -4,8 +4,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
 
-// --- Contexto de Autenticación ---
+// --- Contexto ---
 import { AuthProvider } from './src/context/AuthContext'; // 🚀 NUEVA IMPORTACIÓN
+import { SocketProvider } from './src/context/SocketContext';
 
 // --- Servicios ---
 import { navidromeApi } from './src/services/navidromeApi';
@@ -70,52 +71,54 @@ export default function App() {
     return (
         // 🚀 ENVOLVEMOS TODO CON EL PROVEEDOR DE AUTENTICACIÓN
         <AuthProvider>
-            <SafeAreaProvider>
-                <NavigationContainer
-                    onStateChange={(state) => {
-                        if (!state) return;
+            <SocketProvider>
+                <SafeAreaProvider>
+                    <NavigationContainer
+                        onStateChange={(state) => {
+                            if (!state) return;
 
-                        const getActiveRouteName = (routeState: any): string => {
-                            const route = routeState.routes[routeState.index];
-                            if (route.state) {
-                                return getActiveRouteName(route.state);
-                            }
-                            return route.name;
-                        };
+                            const getActiveRouteName = (routeState: any): string => {
+                                const route = routeState.routes[routeState.index];
+                                if (route.state) {
+                                    return getActiveRouteName(route.state);
+                                }
+                                return route.name;
+                            };
 
-                        const currentRoute = getActiveRouteName(state);
+                            const currentRoute = getActiveRouteName(state);
 
-                        const hiddenMiniPlayerScreens = [
-                            'SettingsMain', 
-                            'AudioSettings', 
-                            'StorageSettings',
-                            'Login',  // 🚀 OCULTAR EN LOGIN
-                            'SignUp'  // 🚀 OCULTAR EN REGISTRO
-                        ];
+                            const hiddenMiniPlayerScreens = [
+                                'SettingsMain', 
+                                'AudioSettings', 
+                                'StorageSettings',
+                                'Login',  // 🚀 OCULTAR EN LOGIN
+                                'SignUp'  // 🚀 OCULTAR EN REGISTRO
+                            ];
 
-                        setShowMiniPlayer(!hiddenMiniPlayerScreens.includes(currentRoute));
-                    }}
-                >
-                    <View style={{ flex: 1, backgroundColor: '#000000' }}>
-                        
-                        <AppNavigator />
+                            setShowMiniPlayer(!hiddenMiniPlayerScreens.includes(currentRoute));
+                        }}
+                    >
+                        <View style={{ flex: 1, backgroundColor: '#000000' }}>
+                            
+                            <AppNavigator />
 
-                        {showMiniPlayer && (
-                            <MiniPlayer 
-                                onExpand={() => setIsFullPlayerVisible(true)} 
-                                isVisible={showMiniPlayer} 
+                            {showMiniPlayer && (
+                                <MiniPlayer 
+                                    onExpand={() => setIsFullPlayerVisible(true)} 
+                                    isVisible={showMiniPlayer} 
+                                />
+                            )}
+
+                            <PlayerScreen 
+                                isVisible={isFullPlayerVisible} 
+                                onClose={() => setIsFullPlayerVisible(false)} 
+                                isPlaying={isPlaying} 
                             />
-                        )}
-
-                        <PlayerScreen 
-                            isVisible={isFullPlayerVisible} 
-                            onClose={() => setIsFullPlayerVisible(false)} 
-                            isPlaying={isPlaying} 
-                        />
-                        
-                    </View>
-                </NavigationContainer>
-            </SafeAreaProvider>
+                            
+                        </View>
+                    </NavigationContainer>
+                </SafeAreaProvider>
+            </SocketProvider>
         </AuthProvider>
     );
 }

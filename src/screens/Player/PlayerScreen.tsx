@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Modal, Animated, PanResponder, Dimensions, Image } from 'react-native';
 import TrackPlayer, { RepeatMode, useActiveTrack } from 'react-native-track-player';
 import { GestureHandlerRootView } from 'react-native-gesture-handler'; // 🚀 IMPORTANTE
@@ -7,6 +7,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'; // 🚀 I
 import { playerService } from '../../services/PlayerService';
 import { localLibraryService } from '../../services/LocalLibraryService';
 
+import { SocketContext } from '../../context/SocketContext';
+import { AuthContext } from '../../context/AuthContext';
 
 // --- Componentes Modulares ---
 import PlayerBackground from '../../components/Player/PlayerBackground/PlayerBackground';
@@ -22,6 +24,7 @@ import TrackLyrics from '../../components/Player/Lyrics/TrackLyrics';
 import LosslessBadge from '../../components/Player/LosslessBadge/LosslessBadge';
 import TrackOptionsModal from '../../components/Common/TrackOptionsModal/TrackOptionsModal';
 import AddToPlaylistModal from '../../components/Common/AddToPlaylistModal/AddToPlaylistModal';
+import TuneModal from '../../components/Player/TuneModal/TuneModal';
 
 // --- Estilos ---
 import { styles } from './PlayerScreen.styles';
@@ -45,6 +48,8 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
     const [currentQueue, setCurrentQueue] = useState<any[]>([]);
     const [isLiked, setIsLiked] = useState(false);
 
+    const { isHostingTune, startTune, stopTune } = useContext(SocketContext);
+
     const activeTrack = useActiveTrack();
 
     // GESTOS Y ANIMACIONES
@@ -53,6 +58,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
     const [isOptionsVisible, setIsOptionsVisible] = useState(false);
     const [isPlaylistModalVisible, setIsPlaylistModalVisible] = useState(false);
     const [playlistTrackId, setPlaylistTrackId] = useState<string | null>(null);
+    const [isTuneModalVisible, setIsTuneModalVisible] = useState(false);
 
     useEffect(() => {
         if (isVisible) {
@@ -392,6 +398,7 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                                     setShowLyrics(!showLyrics);
                                     if (showQueue) setShowQueue(false);
                                 }}
+                                onOpenTune={() => setIsTuneModalVisible(true)}
                             />
                         </View>
                     </Animated.View>
@@ -407,6 +414,13 @@ export default function PlayerScreen({ isVisible, onClose, isPlaying }: PlayerSc
                 isVisible={isPlaylistModalVisible}
                 trackId={playlistTrackId}
                 onClose={() => setIsPlaylistModalVisible(false)}
+            />
+            <TuneModal 
+                isVisible={isTuneModalVisible}
+                onClose={() => setIsTuneModalVisible(false)}
+                isHostingTune={isHostingTune} 
+                onStartTune={startTune}
+                onLeaveTune={stopTune}
             />
         </>
     );

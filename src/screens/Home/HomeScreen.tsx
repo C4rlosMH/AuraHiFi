@@ -15,6 +15,7 @@ import HorizontalSection from '../../components/Home/HorizontalSection/Horizonta
 import ActivityFab from '../../components/Home/ActivityFab/ActivityFab';
 import TopSectionGrid from '../../components/Home/TopSectionGrid/TopSectionGrid';
 import AccountSidebar from '../../components/Common/AccountSidebar/AccountSidebar';
+import RadarModal from '../../components/Home/RadarModal/RadarModal';
 
 // --- Tarjetas ---
 import SquareAlbumCard from '../../components/Home/Cards/SquareAlbumCard';
@@ -37,6 +38,8 @@ export default function HomeScreen() {
     const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]); // 5. Recomendados (Canciones)
     const [artists, setArtists] = useState<Artist[]>([]);                // 6. Artistas
     const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+
+    const [isRadarVisible, setIsRadarVisible] = useState(false);
 
     // --- Atajo Continuar ---
     const [lastTrack, setLastTrack] = useState<any>(null);
@@ -266,7 +269,7 @@ export default function HomeScreen() {
                     <View style={{ height: 130, width: '100%' }} />
                 </ScrollView>
 
-                <ActivityFab onPress={() => console.log('Abrir panel de actividad')} />
+                <ActivityFab onPress={() => setIsRadarVisible(true)} />
             </View>
 
             <AccountSidebar 
@@ -279,6 +282,11 @@ export default function HomeScreen() {
                     setIsSidebarVisible(false); // Primero cerramos el sidebar
                     navigation.navigate('SettingsMain'); // 🚀 Viajamos a la nueva pantalla
                 }}
+            />
+
+            <RadarModal 
+                isVisible={isRadarVisible} 
+                onClose={() => setIsRadarVisible(false)} 
             />
         </AuraBackground>
     );

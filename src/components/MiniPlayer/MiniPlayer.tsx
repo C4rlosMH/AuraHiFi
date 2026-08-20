@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useActiveTrack, useIsPlaying } from 'react-native-track-player';
 import Ionicons from 'react-native-vector-icons/Ionicons'; 
@@ -6,18 +6,43 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { playerService } from '../../services/PlayerService';
 import { styles } from './MiniPlayer.styles';
 import { colors } from '../../styles/theme'; 
+import { SocketContext } from '../../context/SocketContext'; // 🚀 Importamos el puente al servidor
 
 interface MiniPlayerProps {
     onExpand: () => void;
-    isVisible: boolean; // 🚀 Nueva propiedad para ocultarlo sin destruirlo
+    isVisible: boolean; 
 }
 
 export default function MiniPlayer({ onExpand, isVisible }: MiniPlayerProps) {
-    // 🚀 Hooks modernos que siempre saben qué está sonando
     const activeTrack = useActiveTrack();
     const { playing } = useIsPlaying();
+    
+    // 🚀 Extraemos la función de nuestro contexto
+    const { updatePresence, isConnected } = useContext(SocketContext);
 
-    // Si le ordenamos ocultarse o si no hay música en la memoria, no renderiza nada
+    // 🚀 El motor silencioso: Cada vez que la canción o el estado de Play cambien, avisa al servidor
+    useEffect(() => {
+        if (!isConnected) return;
+
+        // Solo emitimos si la canción ya tiene un título válido cargado
+        if (activeTrack && activeTrack.title) {
+            updatePresence({
+                isPlaying: playing ?? false,
+                songTitle: activeTrack.title,
+                artistName: activeTrack.artist,
+                albumArt: activeTrack.artwork,
+                trackId: activeTrack.id
+            });
+        } else if (!activeTrack) {
+            // Si la cola se vació por completo
+            updatePresence({ isPlaying: false });
+        }
+        
+    // 🚀 CLAVE: Dependemos del ID de la canción, no del objeto completo, 
+    // para evitar que mutaciones menores de TrackPlayer repitan el evento
+    }, [activeTrack?.id, playing, isConnected]);
+
+    // Las reglas de renderizado se mantienen intactas
     if (!isVisible || !activeTrack) return null;
 
     return (

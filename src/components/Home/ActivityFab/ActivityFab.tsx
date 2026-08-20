@@ -1,7 +1,8 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from './ActivityFab.styles';
+import { colors } from '../../../styles/theme';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface ActivityFabProps {
     onPress: () => void;
@@ -14,7 +15,7 @@ export default function ActivityFab({ onPress }: ActivityFabProps) {
             onPress={onPress} 
             activeOpacity={0.8}
         >
-            <Ionicons name="pulse" size={28} color={styles.iconColor.color} />
+            <MaterialCommunityIcons name="account-group" size={28} color={colors.light} />
         </TouchableOpacity>
     );
 }
