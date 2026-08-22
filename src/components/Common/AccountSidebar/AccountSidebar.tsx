@@ -11,6 +11,7 @@ import {
     TouchableWithoutFeedback
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Constants from 'expo-constants';
 import { styles } from './AccountSidebar.styles';
 
 import { AuthContext } from '../../../context/AuthContext'
@@ -48,6 +49,8 @@ export default function AccountSidebar({
         onClose(); // Cerramos el sidebar primero con animación
         await logout(); // Borramos credenciales y cambiamos de estado
     };
+
+    const appVersion = Constants.expoConfig?.version;
 
     useEffect(() => {
         if (isVisible) {
@@ -174,7 +177,7 @@ export default function AccountSidebar({
                         <Text style={[styles.optionText, styles.optionTextDanger]}>Cerrar sesión</Text>
                     </TouchableOpacity>
                     
-                    <Text style={styles.versionText}>Aura Hi-Fi v1.16.0</Text>
+                    <Text style={styles.versionText}>Aura Hi-Fi v{appVersion}</Text>
                 </Animated.View>
             </View>
         </Modal>

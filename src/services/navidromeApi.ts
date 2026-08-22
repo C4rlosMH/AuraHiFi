@@ -154,7 +154,7 @@ export const navidromeApi = {
             artist: song.artist,
             album: song.album,
             duration: song.duration,
-            coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+            coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 600 }),
             streamUrl: buildUrl('stream', { id: song.id }),
             starred: song.starred !== undefined
         }));
@@ -311,7 +311,7 @@ export const navidromeApi = {
                 album: song.album,
                 albumId: song.albumId,    
                 duration: song.duration,
-                coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+                coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 600 }),
                 streamUrl: buildUrl('stream', { id: song.id })
             })),
  
@@ -320,7 +320,7 @@ export const navidromeApi = {
                 title: album.name || album.title,
                 artist: artist.name || resolvedName,
                 year: album.year,
-                coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+                coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 })
             }))
         };
     },
@@ -339,7 +339,7 @@ export const navidromeApi = {
             title: album.name || album.title || 'Álbum Desconocido',
             artist: album.artist || 'Artista Desconocido',
             year: album.year,
-            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 })
         }));
     },
  
@@ -353,7 +353,7 @@ export const navidromeApi = {
             title: album.name || album.title || 'Álbum Desconocido',
             artist: album.artist || 'Artista Desconocido',
             year: album.year,
-            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 })
         }));
     },
  
@@ -367,7 +367,7 @@ export const navidromeApi = {
             title: p.name,
             owner: p.owner,
             trackCount: p.songCount,
-            coverArtUrl: buildUrl('getCoverArt', { id: p.coverArt || p.id, size: 300 }) 
+            coverArtUrl: buildUrl('getCoverArt', { id: p.coverArt || p.id, size: 600 }) 
         }));
     },
  
@@ -383,7 +383,7 @@ export const navidromeApi = {
             title: album.name || album.title,
             artist: album.artist,
             artistId: album.artistId,
-            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 500 }),
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 }),
             year: album.year,
             songCount: album.songCount,
             totalDuration: album.duration,
@@ -396,7 +396,7 @@ export const navidromeApi = {
                 album: song.album,
                 duration: song.duration,
                 starred: song.starred !== undefined,
-                artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+                artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 600 }),
                 url: buildUrl('stream', { id: song.id })
             }))
         };
@@ -413,7 +413,7 @@ export const navidromeApi = {
             id: playlist.id,
             title: playlist.name,
             owner: playlist.owner,
-            coverArtUrl: buildUrl('getCoverArt', { id: playlist.coverArt || playlist.id, size: 500 }),
+            coverArtUrl: buildUrl('getCoverArt', { id: playlist.coverArt || playlist.id, size: 600 }),
             songCount: playlist.songCount,
             totalDuration: playlist.duration,
             starred: playlist.starred !== undefined,
@@ -425,7 +425,7 @@ export const navidromeApi = {
                 albumId: song.albumId,
                 duration: song.duration,
                 starred: song.starred !== undefined,
-                artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+                artwork: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 600 }),
                 url: buildUrl('stream', { id: song.id })
             }))
         };
@@ -441,7 +441,7 @@ export const navidromeApi = {
             title: album.name || album.title || 'Álbum Desconocido',
             artist: album.artist || 'Artista Desconocido',
             year: album.year,
-            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 })
         }));
     },
  
@@ -455,7 +455,7 @@ export const navidromeApi = {
             title: album.name || album.title || 'Álbum Desconocido',
             artist: album.artist || 'Artista Desconocido',
             year: album.year,
-            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 })
         }));
     },
  
@@ -488,7 +488,7 @@ export const navidromeApi = {
             artist: song.artist,
             album: song.album,
             duration: song.duration,
-            coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+            coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 600 }),
             streamUrl: buildUrl('stream', { id: song.id })
         }));
     },
@@ -522,7 +522,7 @@ export const navidromeApi = {
                 artist: song.artist,
                 album: song.album,
                 duration: song.duration,
-                coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 300 }),
+                coverArtUrl: buildUrl('getCoverArt', { id: song.coverArt || song.albumId || song.id, size: 600 }),
                 streamUrl: buildUrl('stream', { id: song.id })
             }));
         } catch (error) {
@@ -584,9 +584,9 @@ export const navidromeApi = {
         return albums.map((album: any) => ({
             id: album.id,
             title: album.name || album.title || 'Album Desconocido',
-            artist: album.artist || 'Artista Desconocido',
+            artist: album.artist || 'Artista Desconocido',  
             year: album.year,
-            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 300 })
+            coverArtUrl: buildUrl('getCoverArt', { id: album.id, size: 1000 })
         }));
     }
 };
