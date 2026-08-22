@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, RefreshControl, ActivityIndicator, DeviceEventEmitter } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // --- Servicios e Interfaces ---
 import { navidromeApi, Album, Artist, Track } from '../../services/navidromeApi';
@@ -16,6 +17,7 @@ import ActivityFab from '../../components/Home/ActivityFab/ActivityFab';
 import TopSectionGrid from '../../components/Home/TopSectionGrid/TopSectionGrid';
 import AccountSidebar from '../../components/Common/AccountSidebar/AccountSidebar';
 import RadarModal from '../../components/Home/RadarModal/RadarModal';
+import ResumePlaybackCard from '../../components/Home/Cards/ResumePlaybackCard';
 
 // --- Tarjetas ---
 import SquareAlbumCard from '../../components/Home/Cards/SquareAlbumCard';
@@ -23,20 +25,22 @@ import FeaturedAlbumCard from '../../components/Home/Cards/FeaturedAlbumCard';
 import ArtistCircleCard from '../../components/Home/Cards/ArtistCircleCard';
 
 import { styles } from './HomeScreen.styles';
+import { colors } from '../../styles/theme';
 
 export default function HomeScreen() {
     const navigation = useNavigation<any>();
 
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isOffline, setIsOffline] = useState(false); // 🚀 ESTADO OFFLINE
 
     // --- Colecciones del Catálogo (Las 6 Dimensiones) ---
-    const [smartTopMixes, setSmartTopMixes] = useState<any[]>([]);       // 1. Grid Inteligente
-    const [mostPlayed, setMostPlayed] = useState<Album[]>([]);           // 2. Lo más escuchado
-    const [recentAlbums, setRecentAlbums] = useState<Album[]>([]);       // 3. Añadidos Recientes
-    const [discoveryAlbums, setDiscoveryAlbums] = useState<Album[]>([]); // 4. Descubre (Álbumes)
-    const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]); // 5. Recomendados (Canciones)
-    const [artists, setArtists] = useState<Artist[]>([]);                // 6. Artistas
+    const [smartTopMixes, setSmartTopMixes] = useState<any[]>([]);       
+    const [mostPlayed, setMostPlayed] = useState<Album[]>([]);           
+    const [recentAlbums, setRecentAlbums] = useState<Album[]>([]);       
+    const [discoveryAlbums, setDiscoveryAlbums] = useState<Album[]>([]); 
+    const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]); 
+    const [artists, setArtists] = useState<Artist[]>([]);                
     const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
     const [isRadarVisible, setIsRadarVisible] = useState(false);
@@ -47,7 +51,7 @@ export default function HomeScreen() {
 
     const loadData = async () => {
         try {
-            // Hacemos TODAS las llamadas en paralelo para máxima velocidad
+            setIsOffline(false);
             const [
                 playlistsRes, 
                 frequentAlbumsRes, 
@@ -64,7 +68,6 @@ export default function HomeScreen() {
                 navidromeApi.getArtists()
             ]);
 
-            // 🚀 1. LOGICA DEL GRID INTELIGENTE (TopSectionGrid)
             const visiblePlaylists = playlistsRes
                 .filter(p => p.title !== '__aura_system_library__')
                 .map(p => ({ ...p, type: 'playlist' }));
@@ -73,25 +76,25 @@ export default function HomeScreen() {
             
             if (topGridItems.length < 6) {
                 const fillCount = 6 - topGridItems.length;
-                // Pedimos un relleno extra para no gastar los que ya cargamos para "Descubre"
                 const randomFill = await navidromeApi.getRandomAlbums(fillCount);
                 const mappedFill = randomFill.map(a => ({ ...a, type: 'album' }));
                 topGridItems = [...topGridItems, ...mappedFill];
             }
             
             setSmartTopMixes(topGridItems);
-
-            // 🚀 2. POBLAR EL RESTO DE SECCIONES
             setMostPlayed(frequentAlbumsRes);
             setRecentAlbums(recentAlbumsRes);
             setDiscoveryAlbums(randomAlbumsRes);
             setRecommendedTracks(randomSongsRes);
             
-            // Barajamos los artistas
             const shuffledArtists = [...artistsRes].sort(() => Math.random() - 0.5).slice(0, 15);
             setArtists(shuffledArtists);
 
-        } catch (error) {
+        } catch (error: any) {
+            // 🚀 MODO RESCATE: Si falla la red, marcamos Offline y cortamos ejecución
+            if (error.message === 'OFFLINE' || error.message?.includes('Network request failed')) {
+                setIsOffline(true);
+            }
             console.error("Error cargando datos en Home:", error);
         } finally {
             setIsLoading(false);
@@ -170,8 +173,8 @@ export default function HomeScreen() {
                     fadingEdgeLength={20}
                     refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#FF3366" />}
                 >
-                    {/* 1. EL GRID INTELIGENTE */}
-                    {smartTopMixes.length > 0 && (
+                    {/* 1. EL GRID INTELIGENTE (Solo si hay conexión) */}
+                    {!isOffline && smartTopMixes.length > 0 && (
                         <TopSectionGrid 
                             topMixes={smartTopMixes}
                             lastTrack={lastTrack}
@@ -188,8 +191,37 @@ export default function HomeScreen() {
                         />
                     )}
 
+                    {/* 🚀 MODO OFFLINE UI */}
+                    {isOffline && (
+                        <View style={{ marginTop: 20 }}>
+                            {/* Dejamos que el usuario siga dándole Play a la última canción local */}
+                            {lastTrack && (
+                                <View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
+                                    <ResumePlaybackCard 
+                                        trackTitle={lastTrack?.title || "Nada reproduciéndose"}
+                                        artistName={lastTrack?.artist || "Toca para mezclar"}
+                                        coverUrl={lastTrack?.artwork || "https://via.placeholder.com/150"}
+                                        isPlaying={isPlaying}
+                                        onPlayPause={handleSmartPlay}
+                                        onNext={() => playerService.next()}
+                                        onPrev={() => playerService.previous()}
+                                        onCardPress={() => DeviceEventEmitter.emit('expandPlayer')}
+                                    />
+                                </View>
+                            )}
+
+                            <View style={{ alignItems: 'center', paddingHorizontal: 30, marginTop: 20 }}>
+                                <Ionicons name="cloud-offline-outline" size={64} color={colors.textMuted} />
+                                <Text style={{ color: colors.primary, fontSize: 22, fontWeight: 'bold', marginTop: 15 }}>Modo Sin Conexión</Text>
+                                <Text style={{ color: colors.textMuted, fontSize: 14, textAlign: 'center', marginTop: 10, lineHeight: 22 }}>
+                                    No pudimos conectar con Navidrome. Desliza hacia la derecha para ir a tu Biblioteca y escuchar tu música descargada.
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
                     {/* 2. LO MÁS ESCUCHADO */}
-                    {mostPlayed.length > 0 && (
+                    {!isOffline && mostPlayed.length > 0 && (
                         <HorizontalSection title="Lo más escuchado">
                             {mostPlayed.map(item => (
                                 <SquareAlbumCard 
@@ -204,7 +236,7 @@ export default function HomeScreen() {
                     )}
 
                     {/* 3. AÑADIDOS RECIENTEMENTE */}
-                    {recentAlbums.length > 0 && (
+                    {!isOffline && recentAlbums.length > 0 && (
                         <HorizontalSection title="Añadidos Recientes">
                             {recentAlbums.map(item => (
                                 <SquareAlbumCard 
@@ -218,8 +250,8 @@ export default function HomeScreen() {
                         </HorizontalSection>
                     )}
 
-                    {/* 4. DESCUBRE (Álbumes para expandir la biblioteca) */}
-                    {discoveryAlbums.length > 0 && (
+                    {/* 4. DESCUBRE */}
+                    {!isOffline && discoveryAlbums.length > 0 && (
                         <HorizontalSection title="Descubre">
                             {discoveryAlbums.map(album => (
                                 <SquareAlbumCard 
@@ -233,8 +265,8 @@ export default function HomeScreen() {
                         </HorizontalSection>
                     )}
 
-                    {/* 5. RECOMENDADOS (Música / Canciones Sueltas para darle Play) */}
-                    {recommendedTracks.length > 0 && (
+                    {/* 5. RECOMENDADOS */}
+                    {!isOffline && recommendedTracks.length > 0 && (
                         <HorizontalSection title="Recomendados">
                             {recommendedTracks.map(track => (
                                 <FeaturedAlbumCard 
@@ -252,7 +284,7 @@ export default function HomeScreen() {
                     )}
 
                     {/* 6. ARTISTAS */}
-                    {artists.length > 0 && (
+                    {!isOffline && artists.length > 0 && (
                         <HorizontalSection title="Artistas sugeridos">
                             {artists.map(item => (
                                 <ArtistCircleCard 
@@ -265,7 +297,6 @@ export default function HomeScreen() {
                         </HorizontalSection>
                     )}
 
-                    {/* Parachoques final para el MiniPlayer Flotante */}
                     <View style={{ height: 130, width: '100%' }} />
                 </ScrollView>
 
@@ -279,8 +310,8 @@ export default function HomeScreen() {
                 userName="Usuario Local"
                 serverName="Aura Server"
                 onGoToSettings={() => {
-                    setIsSidebarVisible(false); // Primero cerramos el sidebar
-                    navigation.navigate('SettingsMain'); // 🚀 Viajamos a la nueva pantalla
+                    setIsSidebarVisible(false); 
+                    navigation.navigate('SettingsMain'); 
                 }}
             />
 

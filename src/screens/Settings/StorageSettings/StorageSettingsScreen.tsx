@@ -33,7 +33,7 @@ export default function StorageSettingsScreen() {
             setIsLoading(true);
             const stats = await downloadManager.getStorageStats();
             
-            const APP_BASE_BYTES = 150 * 1024 * 1024; // Estimacion inamovible de la instalacion base
+            const APP_BASE_BYTES = 90 * 1024 * 1024; // Estimacion inamovible de la instalacion base
 
             // Usamos realCacheBytes devuelto por el audit
             const totalAppBytes = stats.flacBytes + stats.mp3Bytes + stats.lrcBytes + stats.artworkBytes + APP_BASE_BYTES + stats.realCacheBytes;

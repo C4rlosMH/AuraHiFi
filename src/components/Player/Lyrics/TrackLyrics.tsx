@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, ActivityIndicator, FlatList } from 'react-native'; 
 import { useActiveTrack, useProgress } from 'react-native-track-player';
 
-
 import { lyricsService } from '../../../services/lyricsService';
 import { ParsedLyric } from '../../../utils/lrcParser';
 import { styles } from './TrackLyrics.styles';
@@ -27,8 +26,20 @@ export default function TrackLyrics() {
       setStaticLyrics(null);
       
       try {
+        // 🚀 PRIORIDAD 0: Buscar en el almacenamiento local del teléfono (Latencia cero, cero red)
+        console.log(`Buscando .lrc local para: ${track.title}`);
+        const localLyrics = await lyricsService.getLyricsFromLocalDisk(track.title, track.artist);
+        
+        if (localLyrics.synced.length > 0 || localLyrics.staticText) {
+            console.log("¡Éxito! Letras cargadas desde el almacenamiento local.");
+            if (localLyrics.synced.length > 0) setLyrics(localLyrics.synced);
+            if (localLyrics.staticText) setStaticLyrics(localLyrics.staticText);
+            setIsLoading(false);
+            return;
+        }
+
         // 🥇 PRIORIDAD 1: Buscar archivo .lrc en tu NAS
-        console.log(`Buscando .lrc en NAS para el ID: ${track.id}`);
+        console.log(`No hay archivo local. Buscando .lrc en NAS para el ID: ${track.id}`);
         const nasLyrics = await lyricsService.getLyricsFromNAS(track.id);
         
         if (nasLyrics.synced.length > 0) {
@@ -39,7 +50,7 @@ export default function TrackLyrics() {
         }
 
         // 🥈 PRIORIDAD 2: Si el NAS no tiene el archivo, buscamos en internet (LRCLIB)
-        console.log("No hay .lrc local, buscando en LRCLIB...");
+        console.log("No hay .lrc en el servidor, buscando en LRCLIB...");
         const lrcLibLyrics = await lyricsService.getLyricsFromLRCLIB(track.artist, track.title);
         
         if (lrcLibLyrics.length > 0) {
@@ -50,7 +61,7 @@ export default function TrackLyrics() {
         }
 
         // 🥉 PRIORIDAD 3: Textos estáticos (sin sincronizar)
-        console.log("No hay letras sincronizadas, buscando estáticas...");
+        console.log("No hay letras sincronizadas, buscando estáticas en NAS...");
         if (nasLyrics.staticText) {
             setStaticLyrics(nasLyrics.staticText);
         } else {
@@ -119,7 +130,7 @@ export default function TrackLyrics() {
       keyExtractor={(item) => item.id}
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent} // 🚀 TOTALMENTE LIMPIO
+      contentContainerStyle={styles.scrollContent} 
       fadingEdgeLength={50}
       onScrollToIndexFailed={(info) => {
         const wait = new Promise(resolve => setTimeout(resolve, 500));

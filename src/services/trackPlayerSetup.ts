@@ -8,6 +8,8 @@ export const setupTrackPlayer = async () => {
     } catch {
         await TrackPlayer.setupPlayer();
         await TrackPlayer.updateOptions({
+            icon: require('../assets/notification-icon.png'),
+
             capabilities: [
                 Capability.Play,
                 Capability.Pause,

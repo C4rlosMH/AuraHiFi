@@ -19,12 +19,11 @@ import CollectionDetailScreen from '../screens/CollactionDetailScreen/Collection
 import ArtistDetailScreen from '../screens/ArtistDetail/ArtistDetailScreen';
 import MathResultScreen from '../screens/MathResult/MathResultScreen';
 import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
-// 🚀 NUEVA IMPORTACIÓN
 import SettingsMainScreen from '../screens/Settings/SettingsMainScreen';
 import AudioSettingsScreen from '../screens/Settings/AudioSettings/AudioSettingsScreen';
 import StorageSettingsScreen from '../screens/Settings/StorageSettings/StorageSettingsScreen';
 
-import GlobalSearchScreen from '../screens/GlobalSearch/GlobalSearchScreen'; // Importamos la pantalla de búsqueda global
+import GlobalSearchScreen from '../screens/GlobalSearch/GlobalSearchScreen'; 
 import ExploreGenreScreen from '../screens/GlobalSearch/ExploreGenreScreen';
 // --- Estilos ---
 import { styles } from './AppNavigator.styles';
@@ -39,7 +38,7 @@ const CommandScreen = () => (
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const RootStack = createNativeStackNavigator(); // 🚀 NUEVO STACK RAIZ
+const RootStack = createNativeStackNavigator();
 
 function HomeStackNavigator() {
     return (
@@ -76,7 +75,8 @@ function SearchStackNavigator() {
 
 // 🚀 ENCAPSULAMOS LAS TABS EN SU PROPIO COMPONENTE
 function MainTabs() {
-    const isAdmin = true; 
+    // 🚀 LEEMOS EL ROL REAL DESDE EL CONTEXTO EN LUGAR DE ESTAR FIJO
+    const { isAdmin } = useContext(AuthContext); 
 
     return (
         <Tab.Navigator
@@ -107,10 +107,10 @@ function MainTabs() {
             })}
         >
             <Tab.Screen name="Home" component={HomeStackNavigator} options={{ title: 'Inicio' }} />
-            {/* Aquí reemplazamos SearchScreen por GlobalSearchScreen */}
             <Tab.Screen name="Search" component={SearchStackNavigator} options={{ title: 'Buscar' }} />
             <Tab.Screen name="Library" component={LibraryStackNavigator} options={{ title: 'Biblioteca' }} />
             
+            {/* 🚀 EL TAB SOLO SE DIBUJA SI ERES ADMINISTRADOR */}
             {isAdmin && (
                 <Tab.Screen name="Command" component={CommandScreen} options={{ title: 'Comando' }} />
             )}
@@ -118,7 +118,6 @@ function MainTabs() {
     );
 }
 
-// 🚀 EL NAVEGADOR PRINCIPAL AHORA ES EL ROOT STACK
 export default function AppNavigator() {
     const { user, isLoading } = useContext(AuthContext);
 

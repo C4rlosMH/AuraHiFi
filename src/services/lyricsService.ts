@@ -1,37 +1,53 @@
 import { buildUrl, fetchFromNavidrome } from './navidromeApi';
-import { parseLrc, ParsedLyric } from '../utils/lrcParser'; // Asumo que esta es la ruta a tu parser
+import { parseLrc, ParsedLyric } from '../utils/lrcParser';
+import { downloadManager } from './downloadManager'; // 🚀 Importamos el motor de almacenamiento
 
 export const lyricsService = {
     
-    // 🚀 1. EL NUEVO ENDPOINT OPENSUBSONIC (Busca tu archivo .lrc local por ID)
+    // 🚀 0. LA NUEVA PRIORIDAD ABSOLUTA: Leer letras del disco duro (Latencia cero)
+    getLyricsFromLocalDisk: async (title: string, artist: string): Promise<{ synced: ParsedLyric[], staticText: string | null }> => {
+        try {
+            const localText = await downloadManager.readLyricsOffline(title, artist);
+            
+            if (localText) {
+                const parsed = parseLrc(localText);
+                if (parsed.length > 0) {
+                    return { synced: parsed, staticText: null };
+                }
+                // Si encontramos el archivo pero no pudimos extraer los tiempos
+                return { synced: [], staticText: localText };
+            }
+            return { synced: [], staticText: null };
+        } catch (error) {
+            console.log("No se pudieron leer las letras locales", error);
+            return { synced: [], staticText: null };
+        }
+    },
+
+    // 🚀 1. EL ENDPOINT OPENSUBSONIC (Busca tu archivo .lrc en tu Servidor)
     getLyricsFromNAS: async (songId: string): Promise<{ synced: ParsedLyric[], staticText: string | null }> => {
         try {
             const url = buildUrl('getLyricsBySongId', { id: songId });
             const data = await fetchFromNavidrome(url);
-            
             const lyricsList = data['subsonic-response']?.lyricsList;
             
             // CASO A: Navidrome encontró tu .lrc y lo procesó nativamente
             if (lyricsList && lyricsList.structuredLyrics && lyricsList.structuredLyrics.length > 0) {
                 const lines = lyricsList.structuredLyrics[0].line || [];
-                
                 const synced: ParsedLyric[] = lines.map((line: any, index: number) => ({
                     id: `nas-lrc-${index}`,
-                    time: line.start / 1000, // Navidrome envía milisegundos, tu app usa segundos
+                    time: line.start / 1000, 
                     text: line.value
                 }));
-                
                 if (synced.length > 0) return { synced, staticText: null };
             }
 
             // CASO B: Navidrome encontró letras pero sin tiempos (texto plano)
             if (lyricsList && lyricsList.text) {
-                // A veces manda el texto del archivo .lrc en crudo. Intentamos parsearlo por si acaso:
                 const parsed = parseLrc(lyricsList.text);
                 if (parsed.length > 0) {
                     return { synced: parsed, staticText: null };
                 }
-                // Si no se pudo parsear, es texto estático 100%
                 return { synced: [], staticText: lyricsList.text };
             }
 
@@ -48,13 +64,12 @@ export const lyricsService = {
             const encodedArtist = encodeURIComponent(artist);
             const encodedTitle = encodeURIComponent(title);
             const url = `https://lrclib.net/api/get?artist_name=${encodedArtist}&track_name=${encodedTitle}`;
-            
             const response = await fetch(url);
+            
             if (!response.ok) return [];
             
             const data = await response.json();
             if (data && data.syncedLyrics) {
-                // Reutilizamos tu parseLrc para mantener todo uniforme
                 return parseLrc(data.syncedLyrics); 
             }
             return [];
@@ -64,7 +79,7 @@ export const lyricsService = {
         }
     },
     
-    // 👴 3. EL ENDPOINT VIEJO (El último recurso)
+    // 👴 3. EL ENDPOINT VIEJO (El último recurso del Servidor)
     getOldStaticLyrics: async (artist: string, title: string): Promise<string | null> => {
         try {
             const url = buildUrl('getLyrics', { artist, title });

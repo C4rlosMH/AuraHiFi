@@ -1,9 +1,10 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { setNavidromeCredentials } from '../services/navidromeApi';
+import { setNavidromeCredentials, navidromeApi } from '../services/navidromeApi';
 
 interface AuthContextType {
     user: string | null;
+    isAdmin: boolean; // 🚀 NUEVO: Estado global de permisos
     isLoading: boolean;
     login: (username: string, pass: string) => Promise<boolean>;
     logout: () => Promise<void>;
@@ -11,6 +12,7 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType>({
     user: null,
+    isAdmin: false,
     isLoading: true,
     login: async () => false,
     logout: async () => {},
@@ -18,6 +20,7 @@ export const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<string | null>(null);
+    const [isAdmin, setIsAdmin] = useState<boolean>(false); // 🚀 NUEVO
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -31,6 +34,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     // Si las hay, las inyectamos en la API y restauramos la sesión
                     setNavidromeCredentials(savedUser, savedPass);
                     setUser(savedUser);
+                    
+                    // 🚀 Consultamos si es admin al restaurar sesión
+                    try {
+                        const userInfo = await navidromeApi.getUser(savedUser);
+                        setIsAdmin(userInfo?.isAdmin || false);
+                    } catch (e) {
+                        console.log("No se pudo verificar el rol de admin al inicio");
+                    }
                 }
             } catch (error) {
                 console.error("Error cargando sesión:", error);
@@ -57,6 +68,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 await SecureStore.setItemAsync('navidrome_user', username);
                 await SecureStore.setItemAsync('navidrome_pass', pass);
                 setUser(username);
+
+                // 🚀 Consultamos si el usuario es admin justo al loguearse
+                try {
+                    const userInfo = await navidromeApi.getUser(username);
+                    setIsAdmin(userInfo?.isAdmin || false);
+                } catch (e) {
+                    setIsAdmin(false);
+                }
+
                 return true;
             }
             return false;
@@ -72,10 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await SecureStore.deleteItemAsync('navidrome_pass');
         setNavidromeCredentials('', '');
         setUser(null);
+        setIsAdmin(false); // 🚀 Limpiamos los permisos
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, isAdmin, isLoading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

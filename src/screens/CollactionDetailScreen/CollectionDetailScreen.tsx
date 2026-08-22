@@ -38,7 +38,7 @@ export default function CollectionDetailScreen() {
         id: string, 
         type: 'album' | 'playlist' | 'local_folder', 
         title: string, 
-        imageUrl?: string // <- Nuevo
+        imageUrl?: string 
     };
 
     // --- ESTADOS ---
@@ -54,7 +54,7 @@ export default function CollectionDetailScreen() {
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [isCollectionOptionsVisible, setIsCollectionOptionsVisible] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const flatListRef = useRef<any>(null); // 🚀 Ahora referenciamos al FlatList
+    const flatListRef = useRef<any>(null); 
     const [isSortModalVisible, setIsSortModalVisible] = useState(false);
     const [currentSort, setCurrentSort] = useState<SortType>('custom');
 
@@ -92,7 +92,7 @@ export default function CollectionDetailScreen() {
         try {
             setIsLoading(true);
 
-            // 1. INTERCEPTOR LOCAL: Si es una carpeta offline
+            // 1. INTERCEPTOR LOCAL: Si es una carpeta offline estática
             if (type === 'local_folder') {
                 const tracks = id === 'fav_folder'
                     ? await localLibraryService.getFavoritedTracks()
@@ -102,7 +102,8 @@ export default function CollectionDetailScreen() {
                     id: id,
                     title: id === 'fav_folder' ? 'Tus Favoritos' : 'Descargas Locales',
                     artist: 'Aura Hi-Fi',
-                    coverArtUrl: tracks.length > 0 ? tracks[0].coverArtUrl : '', 
+                    // 🚀 Aplicamos el (tracks[0] as any) para calmar a TypeScript
+                    coverArtUrl: tracks.length > 0 ? tracks[0].coverArtUrl || (tracks[0] as any).artwork : '', 
                     tracks: tracks
                 });
                 
@@ -111,32 +112,78 @@ export default function CollectionDetailScreen() {
                 setIsLiked(id === 'fav_folder'); 
                 setIsLoading(false);
                 return;
-            }
+            }   
 
-            // 2. FLUJO NORMAL: Cargamos la info del NAS
-            const data = type === 'album' 
-                ? await navidromeApi.getAlbumDetails(id)
-                : await navidromeApi.getPlaylistDetails(id);
+            // 2. FLUJO DE RED CON MODO RESCATE
+            let data;
+            let isOfflineRescue = false;
+
+            try {
+                // Si el ID es claramente un invento de la biblioteca offline, forzamos el error
+                if (id.startsWith('offline_')) throw new Error('OFFLINE');
+
+                data = type === 'album' 
+                    ? await navidromeApi.getAlbumDetails(id)
+                    : await navidromeApi.getPlaylistDetails(id);
+
+            } catch (networkError: any) {
+                // 🚀 MODO RESCATE: Buscamos en el disco local
+                console.log("☁️ FALLO DE RED: Rescatando colección desde almacenamiento local...");
+                isOfflineRescue = true;
+
+                if (type === 'playlist') {
+                    Alert.alert("Sin conexión", "Las Playlists requieren conexión al servidor.");
+                    navigation.goBack();
+                    return;
+                }
+
+                // Rescate de álbumes
+                const offlineTracks = await localLibraryService.getDownloadedTracks();
+                const albumTracks = offlineTracks.filter(t => 
+                    // 🚀 Aplicamos as any para que TypeScript nos deje leer el albumId
+                    (t as any).albumId === id || 
+                    `offline_${t.album}` === id || 
+                    t.album === initialTitle
+                );
+
+                if (albumTracks.length === 0) {
+                    Alert.alert("Álbum no disponible", "No tienes canciones descargadas de este álbum.");
+                    navigation.goBack();
+                    return;
+                }
+
+                // Fabricamos el objeto "Álbum" usando las canciones locales
+                data = {
+                    id: id,
+                    title: albumTracks[0].album || initialTitle,
+                    artist: albumTracks[0].artist,
+                    // 🚀 Aplicamos as any para leer el artwork sin que TS llore
+                    coverArtUrl: albumTracks[0].coverArtUrl || (albumTracks[0] as any).artwork || initialImageUrl,
+                    songCount: albumTracks.length,
+                    totalDuration: albumTracks.reduce((acc, t) => acc + (t.duration || 0), 0),
+                    starred: albumTracks.some(t => t.isFavorited),
+                    tracks: albumTracks
+                };
+            }
             
             setDetails(data);
 
             // 3. HIDRATACION DE ESTADOS
-            
-            // A. Verificamos el Like
             setIsLiked(!!data.starred);
-
-            // B. Verificamos el Pin
+            
             const pinnedStatus = await pinService.isPinned(id);
             setIsPinned(pinnedStatus);
 
-            // C. Verificamos si este album esta en la Biblioteca Virtual
             if (type === 'album') {
                 const isSaved = await VirtualLibraryService.isAlbumSaved(id);
                 setIsAlbumSaved(isSaved);
             }
 
-            // D. Verificamos si esta descargado usando tu downloadManager
-            if (data.tracks && data.tracks.length > 0) {
+            // Validamos estado de descarga
+            if (isOfflineRescue) {
+                // Si lo rescatamos, obviamente está descargado
+                setIsDownloaded(true);
+            } else if (data.tracks && data.tracks.length > 0) {
                 const firstTrack = data.tracks[0];
                 const fallbackArtist = type === 'album' ? (data as any).artist : (data as any).owner;
                 const trackArtist = firstTrack.artist || fallbackArtist || "Aura Hi-Fi";
@@ -150,8 +197,8 @@ export default function CollectionDetailScreen() {
             }
             
         } catch (error) {
-            console.error("Error cargando detalles:", error);
-            Alert.alert("Error de conexion", "No se pudo cargar la coleccion desde el NAS.");
+            console.error("Error fatal cargando detalles:", error);
+            Alert.alert("Error de conexión", "No se pudo cargar la colección.");
             navigation.goBack();
         } finally {
             setIsLoading(false);
@@ -193,7 +240,6 @@ export default function CollectionDetailScreen() {
             const newState = await navidromeApi.toggleStar(id, isLiked, 'album');
             setIsLiked(newState);
             
-            // 🚀 DISPARAMOS EL AUTO-GUARDADO (Solo si estamos dando Like, no si lo estamos quitando)
             if (newState) {
                 await ensureAlbumInVirtualLibrary();
             }
@@ -227,36 +273,32 @@ export default function CollectionDetailScreen() {
     };
 
     const ensureAlbumInVirtualLibrary = async () => {
-        // Filtro de seguridad: Solo actúa en álbumes con canciones
         if (type !== 'album' || !details?.tracks || details.tracks.length === 0) return;
 
         try {
-            // Preguntamos directo al disco duro (evitamos errores de estado de React)
             const currentlySaved = await VirtualLibraryService.isAlbumSaved(id);
             
             if (!currentlySaved) {
-                setIsAlbumSaved(true); // Encendemos el ícono visual al instante
+                setIsAlbumSaved(true); 
                 const trackRepId = details.tracks[0].id;
                 await VirtualLibraryService.toggleAlbumInLibrary(id, trackRepId);
                 console.log("✅ Álbum auto-guardado en biblioteca por descarga/like");
             }
         } catch (error) {
             console.error("Error en auto-guardado silencioso:", error);
-            setIsAlbumSaved(false); // Revertimos solo si el NAS rechaza la conexión
+            setIsAlbumSaved(false); 
         }
     };
+
     const handleDownload = async () => {
         if (!details || !details.tracks || details.tracks.length === 0) return;
 
         try {
-            // 🚀 1. DISPARAMOS EL AUTO-GUARDADO ANTES DE HACER CUALQUIER OTRA COSA
             await ensureAlbumInVirtualLibrary();
 
-            // 2. INICIO DE DESCARGA LOCAL
             setIsDownloaded(true); 
             setDownloadProgress("0%");
 
-            // Preparamos el array de pistas, asegurándonos de extraer el suffix
             const tracksToProcess = details.tracks.map((t: any) => ({
                 id: t.id,
                 title: t.title,
@@ -265,11 +307,9 @@ export default function CollectionDetailScreen() {
                 duration: t.duration,
                 coverArtUrl: t.coverArtUrl || details.coverArtUrl,
                 streamUrl: t.streamUrl || t.url,
-                suffix: t.suffix // <- IMPORTANTE: Pasamos el sufijo para respetar el FLAC
+                suffix: t.suffix 
             }));
 
-            // Usamos tu método existente para descargar el lote (solo ajustamos si internamente downloadCollection lo necesita, 
-            // pero el que guarda realmente es el ciclo 'for' de abajo o el mismo método interno).
             await downloadManager.downloadCollection(tracksToProcess, (downloaded, total) => {
                 const percentage = Math.round((downloaded / total) * 100);
                 setDownloadProgress(`${percentage}%`);
@@ -277,16 +317,13 @@ export default function CollectionDetailScreen() {
 
             console.log("Registrando pistas en la biblioteca offline...");
             
-            // 🚀 3. EL BUCLE DE GUARDADO Y DESCARGA DE LETRAS
             for (const track of tracksToProcess) {
-                // AQUÍ ESTÁ LA MAGIA: Llamamos a downloadTrack individualmente para que intente
-                // rescatar el archivo (si ya existe por downloadCollection) Y disparar el rescate de las letras.
                 const localUri = await downloadManager.downloadTrack(
                     track.streamUrl, 
                     track.title, 
                     track.artist, 
                     track.suffix, 
-                    track.id // <- ESTE ES EL DATO CLAVE PARA LAS LETRAS
+                    track.id 
                 );
                 
                 if (localUri) {
@@ -332,7 +369,7 @@ export default function CollectionDetailScreen() {
 
                             Alert.alert("Completado", "La descarga ha sido eliminada.");
 
-                            if (type === 'local_folder') {
+                            if (type === 'local_folder' || id.startsWith('offline_')) {
                                 navigation.goBack();
                             }
 
@@ -384,7 +421,6 @@ export default function CollectionDetailScreen() {
     const filteredTracks = useMemo(() => {
         if (!details?.tracks) return [];
 
-        // 1. Filtro de Búsqueda
         let result = details.tracks.filter((track: any) => {
             const searchLower = searchQuery.toLowerCase();
             const safeTitle = String(track.title || '').toLowerCase();
@@ -392,7 +428,6 @@ export default function CollectionDetailScreen() {
             return safeTitle.includes(searchLower) || safeArtist.includes(searchLower);
         });
 
-        // 2. Ordenamiento
         if (currentSort === 'recent') {
             result = [...result].reverse();
         } else if (currentSort === 'title') {
@@ -407,13 +442,12 @@ export default function CollectionDetailScreen() {
             });
         }
         return result;
-    }, [details?.tracks, searchQuery, currentSort]); // <- React solo recalcula si estas 3 cosas cambian
+    }, [details?.tracks, searchQuery, currentSort]); 
     
     // --- RENDERIZADO ---
     
     if (isLoading || !details) {
         return (
-            // 🚀 Usamos la imagen que nos mandó el Home/Library de inmediato
             <AuraBackground coverUrl={initialImageUrl}>
                 <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
                     <ActivityIndicator size="large" color={colors.accent} />
@@ -426,13 +460,11 @@ export default function CollectionDetailScreen() {
         <AuraBackground coverUrl={details.coverArtUrl}>
             <View style={styles.container}>
                 
-                {/* 1. EL HEADER FIJO EN LA PARTE SUPERIOR */}
                 <CollectionHeader 
                     onBack={() => navigation.goBack()} 
                     onOptions={() => setIsCollectionOptionsVisible(true)}
                 />
 
-                {/* 🚀 2. LA LISTA TURBO (Ya tiene su propio scroll y su Header interno) */}
                 <CollectionTrackList 
                     listRef={flatListRef}
                     tracks={filteredTracks} 
@@ -454,7 +486,6 @@ export default function CollectionDetailScreen() {
                             Alert.alert("Error", "No se pudo eliminar la canción de la playlist.");
                         }
                     }}
-                    // 🚀 AQUI VA TODO LO QUE ANTES ESTABA SUELTO ARRIBA
                     ListHeaderComponent={
                         <>
                             {type === 'playlist' && (
@@ -492,7 +523,6 @@ export default function CollectionDetailScreen() {
                 />
             </View>
 
-            {/* 3. TODOS TUS MODALES SE QUEDAN EXACTAMENTE IGUAL */}
             <AddSongsModal 
                 isVisible={isAddModalVisible}
                 playlistId={id}
