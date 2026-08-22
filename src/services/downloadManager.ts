@@ -200,6 +200,27 @@ export const downloadManager = {
         return { flacBytes, mp3Bytes, lrcBytes, artworkBytes, realCacheBytes, freeDisk, totalDisk };
     },
 
+    async clearTempCache(): Promise<boolean> {
+        try {
+            const cacheDir = (FileSystem as any).cacheDirectory;
+            if (!cacheDir) return false;
+
+            // Leemos todo lo que hay en la carpeta temporal
+            const cacheFiles = await FileSystem.readDirectoryAsync(cacheDir);
+            
+            // Borramos archivo por archivo silenciosamente
+            for (const file of cacheFiles) {
+                await FileSystem.deleteAsync(`${cacheDir}${file}`, { idempotent: true });
+            }
+            
+            console.log("🧹 Caché temporal limpiada con éxito.");
+            return true;
+        } catch (error) {
+            console.error("Error al intentar limpiar la caché temporal:", error);
+            return false;
+        }
+    },
+
     async purgeLegacyMp3Files(): Promise<number> {
         try {
             await this.initializeDirectory();

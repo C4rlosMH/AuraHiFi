@@ -28,44 +28,31 @@ export default function StorageSettingsScreen() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
+    const loadRealStorageData = async () => {
+        setIsLoading(true);
+        const stats = await downloadManager.getStorageStats();
+        
+        const APP_BASE_BYTES = 90 * 1024 * 1024;
+        const totalAppBytes = stats.flacBytes + stats.mp3Bytes + stats.lrcBytes + stats.artworkBytes + APP_BASE_BYTES + stats.realCacheBytes;
+
+        const getPercent = (bytes: number) => totalAppBytes > 0 ? (bytes / totalAppBytes) * 65 : 0;
+
+        const newData: StorageSlice[] = [];
+
+        if (stats.flacBytes > 0) newData.push({ id: 'flac', label: 'Audio FLAC', sizeText: formatBytes(stats.flacBytes), percentage: getPercent(stats.flacBytes), color: '#6E56CF', lidColor: '#846DDF' });
+        if (stats.mp3Bytes > 0) newData.push({ id: 'mp3', label: 'Audio MP3', sizeText: formatBytes(stats.mp3Bytes), percentage: getPercent(stats.mp3Bytes), color: '#A12338', lidColor: '#B63A4D' });
+        if (stats.artworkBytes > 0) newData.push({ id: 'artwork', label: 'Portadas', sizeText: formatBytes(stats.artworkBytes), percentage: getPercent(stats.artworkBytes), color: '#00B5CE', lidColor: '#22C8DF' });
+        if (stats.lrcBytes > 0) newData.push({ id: 'lyrics', label: 'Letras', sizeText: formatBytes(stats.lrcBytes), percentage: getPercent(stats.lrcBytes), color: '#12A594', lidColor: '#27B8A8' });
+        if (stats.realCacheBytes > 0) newData.push({ id: 'cache', label: 'Cache', sizeText: formatBytes(stats.realCacheBytes), percentage: getPercent(stats.realCacheBytes), color: '#E54D2E', lidColor: '#ED6B53' });
+        if (APP_BASE_BYTES > 0) newData.push({ id: 'system', label: 'Aura App', sizeText: formatBytes(APP_BASE_BYTES), percentage: getPercent(APP_BASE_BYTES), color: '#687076', lidColor: '#7E868C' });
+
+        setStorageData(newData);
+        setDiskInfo({ usedApp: totalAppBytes, free: stats.freeDisk, total: stats.totalDisk });
+        setIsLoading(false);
+    };
+
+    // 🚀 2. El useEffect ahora solo llama a la función externa
     useEffect(() => {
-        const loadRealStorageData = async () => {
-            setIsLoading(true);
-            const stats = await downloadManager.getStorageStats();
-            
-            const APP_BASE_BYTES = 90 * 1024 * 1024; // Estimacion inamovible de la instalacion base
-
-            // Usamos realCacheBytes devuelto por el audit
-            const totalAppBytes = stats.flacBytes + stats.mp3Bytes + stats.lrcBytes + stats.artworkBytes + APP_BASE_BYTES + stats.realCacheBytes;
-
-            const getPercent = (bytes: number) => totalAppBytes > 0 ? (bytes / totalAppBytes) * 65 : 0;
-
-            const newData: StorageSlice[] = [];
-
-            if (stats.flacBytes > 0) {
-                newData.push({ id: 'flac', label: 'Audio FLAC', sizeText: formatBytes(stats.flacBytes), percentage: getPercent(stats.flacBytes), color: '#6E56CF', lidColor: '#846DDF' });
-            }
-            if (stats.mp3Bytes > 0) {
-                newData.push({ id: 'mp3', label: 'Audio MP3', sizeText: formatBytes(stats.mp3Bytes), percentage: getPercent(stats.mp3Bytes), color: '#A12338', lidColor: '#B63A4D' });
-            }
-            if (stats.artworkBytes > 0) {
-                newData.push({ id: 'artwork', label: 'Portadas offline', sizeText: formatBytes(stats.artworkBytes), percentage: getPercent(stats.artworkBytes), color: '#00B5CE', lidColor: '#22C8DF' });
-            }
-            if (stats.lrcBytes > 0) {
-                newData.push({ id: 'lyrics', label: 'Letras', sizeText: formatBytes(stats.lrcBytes), percentage: getPercent(stats.lrcBytes), color: '#12A594', lidColor: '#27B8A8' });
-            }
-            if (stats.realCacheBytes > 0) {
-                newData.push({ id: 'cache', label: 'Cache', sizeText: formatBytes(stats.realCacheBytes), percentage: getPercent(stats.realCacheBytes), color: '#E54D2E', lidColor: '#ED6B53' });
-            }
-            if (APP_BASE_BYTES > 0) {
-                newData.push({ id: 'system', label: 'Aura App', sizeText: formatBytes(APP_BASE_BYTES), percentage: getPercent(APP_BASE_BYTES), color: '#687076', lidColor: '#7E868C' });
-            }
-
-            setStorageData(newData);
-            setDiskInfo({ usedApp: totalAppBytes, free: stats.freeDisk, total: stats.totalDisk });
-            setIsLoading(false);
-        };
-
         loadRealStorageData();
     }, []);
 
@@ -75,11 +62,25 @@ export default function StorageSettingsScreen() {
             "¿Deseas liberar el caché temporal? Tus archivos FLAC descargados permanecerán intactos.",
             [
                 { text: "Cancelar", style: "cancel" },
-                { text: "Limpiar", style: "destructive", onPress: () => console.log("Caché borrado") }
+                { 
+                    text: "Limpiar", 
+                    style: "destructive", 
+                    onPress: async () => {
+                        setIsLoading(true); 
+                        
+                        // 1. Destruimos la caché
+                        await downloadManager.clearTempCache(); 
+                        
+                        // 2. Recalculamos el cilindro (¡Llamando a la función que sacamos del useEffect!)
+                        await loadRealStorageData(); 
+                        
+                        Alert.alert("Caché Liberada", "El espacio temporal ha sido recuperado con éxito.");
+                    } 
+                }
             ]
         );
     };
-
+    
     const handleDeepClean = () => {
         Alert.alert(
             "Limpieza Profunda",
