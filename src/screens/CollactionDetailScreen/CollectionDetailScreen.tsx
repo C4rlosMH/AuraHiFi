@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useContext } from 'react';
 import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { SocketContext } from '../../context/SocketContext';
+import TuneModal from '../../components/Player/TuneModal/TuneModal';
 
 // --- Servicios ---
 import { navidromeApi } from '../../services/navidromeApi';
@@ -40,6 +43,9 @@ export default function CollectionDetailScreen() {
         title: string, 
         imageUrl?: string 
     };
+
+    const { isHostingTune, startTune, stopTune } = useContext(SocketContext);
+    const [isTuneModalVisible, setIsTuneModalVisible] = useState(false);
 
     // --- ESTADOS ---
     const [details, setDetails] = useState<any>(null);
@@ -560,8 +566,8 @@ export default function CollectionDetailScreen() {
                     setTimeout(() => handleRemoveDownload(), 10);
                 }}
                 onStartJam={() => {
-                    console.log("TODO: Empezar Jam");
                     setIsCollectionOptionsVisible(false);
+                    setTimeout(() => setIsTuneModalVisible(true), 300); // 🚀 Evita choque de modales
                 }}
                 onTogglePin={() => {
                     setIsCollectionOptionsVisible(false);
@@ -666,6 +672,13 @@ export default function CollectionDetailScreen() {
                         console.log("No se pudo guardar la preferencia de orden", error);
                     }
                 }}
+            />
+            <TuneModal 
+                isVisible={isTuneModalVisible}
+                onClose={() => setIsTuneModalVisible(false)}
+                isHostingTune={isHostingTune}
+                onStartTune={startTune}
+                onLeaveTune={stopTune}
             />
         </AuraBackground>
     );

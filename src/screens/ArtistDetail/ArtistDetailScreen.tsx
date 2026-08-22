@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import TrackPlayer from 'react-native-track-player';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -7,6 +7,9 @@ import { navidromeApi, Track } from '../../services/navidromeApi';
 import { playerService } from '../../services/PlayerService';
 import { colors } from '../../styles/theme';
 import { styles } from './ArtistDetailScreen.styles';
+
+import { SocketContext } from '../../context/SocketContext';
+import TuneModal from '../../components/Player/TuneModal/TuneModal';
 
 import AuraBackground from '../../components/AuraBackground/AuraBackground';
 import CollectionHeader from '../../components/CollectionDetail/Header/CollectionHeader'; 
@@ -21,6 +24,9 @@ export default function ArtistDetailScreen() {
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
     const { id, name } = route.params; 
+
+    const { isHostingTune, startTune, stopTune } = useContext(SocketContext);
+    const [isTuneModalVisible, setIsTuneModalVisible] = useState(false);
 
     const [artistData, setArtistData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +184,10 @@ export default function ArtistDetailScreen() {
                 subtitle={artistData?.albumCount ? `${artistData.albumCount} álbumes` : ''}
                 coverArtUrl={artistData?.artistImageUrl}
                 type="artist"
+                onStartJam={() => {
+                    setIsOptionsVisible(false);
+                    setTimeout(() => setIsTuneModalVisible(true), 300);
+                }}
                 
                 onCreateStation={async () => {
                     setIsOptionsVisible(false);
@@ -202,6 +212,13 @@ export default function ArtistDetailScreen() {
                         }
                     }
                 }}
+            />
+            <TuneModal 
+                isVisible={isTuneModalVisible}
+                onClose={() => setIsTuneModalVisible(false)}
+                isHostingTune={isHostingTune}
+                onStartTune={startTune}
+                onLeaveTune={stopTune}
             />
         </AuraBackground>
     );

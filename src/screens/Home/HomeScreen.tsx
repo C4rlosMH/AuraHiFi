@@ -1,13 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext, } from 'react';
 import { View, Text, ScrollView, RefreshControl, ActivityIndicator, DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { State, Event, useTrackPlayerEvents } from 'react-native-track-player';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+
 // --- Servicios e Interfaces ---
 import { navidromeApi, Album, Artist, Track } from '../../services/navidromeApi';
 import { playerService } from '../../services/PlayerService';
+
+import { SocketContext } from '../../context/SocketContext';
+import TuneModal from '../../components/Player/TuneModal/TuneModal';
 
 // --- Componentes Globales ---
 import AuraBackground from '../../components/AuraBackground/AuraBackground';
@@ -16,7 +20,6 @@ import HorizontalSection from '../../components/Home/HorizontalSection/Horizonta
 import ActivityFab from '../../components/Home/ActivityFab/ActivityFab';
 import TopSectionGrid from '../../components/Home/TopSectionGrid/TopSectionGrid';
 import AccountSidebar from '../../components/Common/AccountSidebar/AccountSidebar';
-import RadarModal from '../../components/Home/RadarModal/RadarModal';
 import ResumePlaybackCard from '../../components/Home/Cards/ResumePlaybackCard';
 
 // --- Tarjetas ---
@@ -29,6 +32,9 @@ import { colors } from '../../styles/theme';
 
 export default function HomeScreen() {
     const navigation = useNavigation<any>();
+
+    const { isHostingTune, startTune, stopTune } = useContext(SocketContext);
+    const [isTuneModalVisible, setIsTuneModalVisible] = useState(false);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -43,7 +49,6 @@ export default function HomeScreen() {
     const [artists, setArtists] = useState<Artist[]>([]);                
     const [isSidebarVisible, setIsSidebarVisible] = useState(false);
 
-    const [isRadarVisible, setIsRadarVisible] = useState(false);
 
     // --- Atajo Continuar ---
     const [lastTrack, setLastTrack] = useState<any>(null);
@@ -300,7 +305,7 @@ export default function HomeScreen() {
                     <View style={{ height: 130, width: '100%' }} />
                 </ScrollView>
 
-                <ActivityFab onPress={() => setIsRadarVisible(true)} />
+                <ActivityFab onPress={() => setIsTuneModalVisible(true)} />
             </View>
 
             <AccountSidebar 
@@ -315,9 +320,12 @@ export default function HomeScreen() {
                 }}
             />
 
-            <RadarModal 
-                isVisible={isRadarVisible} 
-                onClose={() => setIsRadarVisible(false)} 
+            <TuneModal 
+                isVisible={isTuneModalVisible}
+                onClose={() => setIsTuneModalVisible(false)}
+                isHostingTune={isHostingTune}
+                onStartTune={startTune}
+                onLeaveTune={stopTune}
             />
         </AuraBackground>
     );
