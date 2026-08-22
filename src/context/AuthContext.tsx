@@ -1,10 +1,11 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { setNavidromeCredentials, navidromeApi } from '../services/navidromeApi';
+import { VirtualLibraryService } from '../services/VirtualLibraryService'; // 🚀 IMPORTAMOS EL SERVICIO
 
 interface AuthContextType {
     user: string | null;
-    isAdmin: boolean; // 🚀 NUEVO: Estado global de permisos
+    isAdmin: boolean; 
     isLoading: boolean;
     login: (username: string, pass: string) => Promise<boolean>;
     logout: () => Promise<void>;
@@ -20,33 +21,33 @@ export const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<string | null>(null);
-    const [isAdmin, setIsAdmin] = useState<boolean>(false); // 🚀 NUEVO
+    const [isAdmin, setIsAdmin] = useState<boolean>(false); 
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const loadSession = async () => {
             try {
-                // Buscamos si hay credenciales guardadas en el teléfono
                 const savedUser = await SecureStore.getItemAsync('navidrome_user');
                 const savedPass = await SecureStore.getItemAsync('navidrome_pass');
 
                 if (savedUser && savedPass) {
-                    // Si las hay, las inyectamos en la API y restauramos la sesión
                     setNavidromeCredentials(savedUser, savedPass);
                     setUser(savedUser);
                     
-                    // 🚀 Consultamos si es admin al restaurar sesión
                     try {
                         const userInfo = await navidromeApi.getUser(savedUser);
                         setIsAdmin(userInfo?.isAdmin || false);
+                        
+                        // 🚀 MAGIA 1: Sincronizamos la biblioteca al abrir la app
+                        await VirtualLibraryService.syncLibraryFromCloud();
                     } catch (e) {
-                        console.log("No se pudo verificar el rol de admin al inicio");
+                        console.log("No se pudo verificar el rol o sincronizar al inicio");
                     }
                 }
             } catch (error) {
                 console.error("Error cargando sesión:", error);
             } finally {
-                setIsLoading(false); // Terminamos de cargar, la app ya puede decidir qué pantalla mostrar
+                setIsLoading(false); 
             }
         };
 
@@ -55,24 +56,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const login = async (username: string, pass: string): Promise<boolean> => {
         try {
-            // 1. Inyectamos temporalmente para probar
             setNavidromeCredentials(username, pass);
             
-            // 2. Hacemos una petición rápida al servidor (ej. un ping) para ver si la contraseña es correcta
             const { buildUrl, fetchFromNavidrome } = require('../services/navidromeApi');
             const url = buildUrl('ping');
             const response = await fetchFromNavidrome(url);
 
             if (response['subsonic-response']?.status === 'ok') {
-                // 3. Si fue un éxito, guardamos las credenciales en la bóveda segura del teléfono
                 await SecureStore.setItemAsync('navidrome_user', username);
                 await SecureStore.setItemAsync('navidrome_pass', pass);
                 setUser(username);
 
-                // 🚀 Consultamos si el usuario es admin justo al loguearse
                 try {
                     const userInfo = await navidromeApi.getUser(username);
                     setIsAdmin(userInfo?.isAdmin || false);
+                    
+                    // 🚀 MAGIA 2: Sincronizamos la biblioteca justo después de loguearse en un cel nuevo
+                    await VirtualLibraryService.syncLibraryFromCloud();
                 } catch (e) {
                     setIsAdmin(false);
                 }
@@ -87,12 +87,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = async () => {
-        // Borramos todo del teléfono y limpiamos el estado
         await SecureStore.deleteItemAsync('navidrome_user');
         await SecureStore.deleteItemAsync('navidrome_pass');
         setNavidromeCredentials('', '');
         setUser(null);
-        setIsAdmin(false); // 🚀 Limpiamos los permisos
+        setIsAdmin(false); 
     };
 
     return (
